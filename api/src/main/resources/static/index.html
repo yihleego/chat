@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>Chat</title>
+    <meta charset='UTF-8'>
+    <meta content='chat' name='description'>
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+</head>
+<style>
+    .item {
+        display: flex;
+        margin-bottom: 10px;
+    }
+
+    .left {
+        flex-direction: row;
+    }
+
+    .right {
+        flex-direction: row-reverse;
+    }
+
+    .right .message {
+        margin-right: 10px;
+    }
+
+    .left .message {
+        margin-left: 10px;
+    }
+
+    .header-img {
+        width: 42px;
+        height: 42px;
+        border-radius: 100px;
+    }
+
+    .message {
+        border-radius: 10px;
+        display: flex;
+        background: #efefef;
+        min-height: 25px;
+        padding: 9px 10px;
+        align-items: center;
+        color: #222121;
+    }
+
+    .input-box {
+        width: 100%;
+        display: flex;
+        padding: 4px 6px;
+        box-sizing: border-box;
+    }
+
+    .input-box textarea {
+        flex: 1;
+        border-radius: 5px;
+        border: 1px #cecece solid;
+        padding: 3px 4px;
+        outline: none;
+    }
+
+    .input-box button {
+        width: 80px;
+        background: #2196F4;
+        border-radius: 5px;
+        border: 1px #fffa solid;
+        color: #ffffff;
+        margin: 0px 6px;
+        outline: none;
+    }
+
+    .input-box button:active {
+        background: #044879;
+    }
+
+    .chat-timer {
+        text-align: center;
+        color: #616161;
+        font-size: 13px;
+    }
+</style>
+<body>
+<main id='app'>
+    <div style=" text-align: center">
+        <h2>{{status === 1 ? 'OK!' : 'NO!'}}</h2>
+        <div style="width: 800px; margin: 0 auto;">
+            <div style="max-height: 400px;overflow-y: auto">
+                <div class="item left" v-for='item in list'>
+                    <img class="header-img"/>
+                    <span class="message">{{item.content}}</span>
+                </div>
+            </div>
+            <div class="input-box">
+                <textarea v-model="message.content" @keyup.enter="sendMessage"
+                          rows="3" style="resize: none"></textarea>
+                <button @click="sendMessage">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!--<div v-for='item in list'>
+        <span class="time">{{item.time}}</span>
+        <span class="name">{{item.sender}}</span>
+        <span class="content">{{item.content}}</span>
+        <span class="status">{{item.sending ? 'sending...' : ''}}</span>
+    </div>
+    <input autocomplete="off" clearable="true" maxlength="200" v-model="message.recipient"/>
+    <input autocomplete="off" clearable="true" maxlength="200" v-model="message.content"/>
+    <button @click="sendMessage">Send</button>
+    <br>
+    <br>
+    <button @click="ping">ping</button>
+    <br>
+    <button @click="close">close</button>-->
+</main>
+<script src='scripts/vue.min.js'></script>
+<script src='scripts/axios.min.js'></script>
+<script src="scripts/protobuf.min.js"></script>
+<script>
+    const CODE = {
+        UNKNOWN: 0,
+        ERROR: 1,
+        HEARTBEAT: 2,
+        AUTHENTICATION: 3,
+        SEND_MESSAGE: 10,
+        RECEIVE_MESSAGE: 11,
+        RECEIVED_MESSAGE: 12,
+        DELIVERED_MESSAGE: 13,
+        DELIVERED_OFFLINE_MESSAGE: 14,
+    };
+    const CHATTER_PROTO =
+        `syntax = "proto3";
+    import "google/protobuf/any.proto";
+    package Chatter;
+    message Box { google.protobuf.Any data = 1; string message = 2; int32 code = 3; }
+    message Message { string id = 1; int64 recipient = 2; int64 sender = 3; }
+    message Token { string value = 1; }`;
+    const api = {
+        message: {
+            get(params, callback) {
+                $get('/messages/' + params, null, callback);
+            },
+            save(params, callback) {
+                $post('/messages', params, callback);
+            },
+            mark(params, callback) {
+                $patch('/messages/' + params, null, callback);
+            },
+            listUnread(params, callback) {
+                $get('/messages/unread', params, callback);
+            },
+        },
+    };
+
+    const vm = new Vue({
+        el: '#app',
+        data: {
+            ws: null,
+            status: 0,
+            URL: null,
+            proto: {
+                box: null,
+                message: null,
+                token: null,
+            },
+            message: {
+                recipient: null,
+                content: null,
+            },
+            list: [],
+            sending: false,
+        },
+        methods: {
+            sendMessage() {
+                if (this.status === 0) {
+                    return;
+                }
+                if (this.status !== 1) {
+                    return;
+                }
+                if (this.message.content === null || this.message.content === '' || this.sending) {
+                    return;
+                }
+                this.sending = true;
+                let m = {
+                    sender: 'me',
+                    content: this.message.content,
+                    sending: 1,
+                };
+                this.list.push(m);
+                api.message.save(this.message, (result) => {
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        this.sending = false;
+                        return;
+                    }
+                    let message = result.data;
+                    this.sendMsg({id: message.id, recipient: message.recipient, sender: message.sender});
+                    m.id = message.id;
+                    m.sending = 0;
+                    m.time = this.format(new Date());
+                    this.message.content = null;
+                    this.sending = false;
+                });
+            },
+            getMessage(id, callback) {
+                api.message.get(id, (result) => {
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        return;
+                    }
+                    console.log(result.data, result.data.content);
+                    api.message.mark(id, (result2) => {
+                        callback(result.data);
+                    });
+                });
+            },
+            listUnread(anchor) {
+                api.message.listUnread(anchor, (result) => {
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        return;
+                    }
+                    if (result.data.length === 0) {
+                        this.status = 1;
+                        return;
+                    }
+                    let messages = result.data;
+                    for (let i in messages) {
+                        this.list.push(messages[i]);
+                    }
+                    this.listUnread({anchor: messages[messages.length - 1].id});
+                });
+            },
+            ping() {
+                this.send(CODE.HEARTBEAT, null);
+            },
+            sendMsg(msg) {
+                let data = this.pack(this.proto.message.encode(msg).finish(), this.proto.message)
+                this.send(CODE.SEND_MESSAGE, data);
+            },
+            send(code, data) {
+                let box = this.proto.box.create({code, data});
+                let buffer = this.proto.box.encode(box).finish();
+                this.ws.send(buffer);
+            },
+            pack(value, type) {
+                return this.proto.any.create({
+                    type_url: 'type.googleapis.com/' + type.name,
+                    value: value
+                });
+            },
+            unpack(data, type) {
+                return type.decode(data.value)
+            },
+            onopen(event) {
+                console.log("Connected", event);
+                this.listUnread(null);
+            },
+            onclose(event) {
+                console.log("Disconnected", event);
+                this.status = 2;
+            },
+            onmessage(event) {
+                console.log(event);
+                let box = this.proto.box.decode(new Uint8Array(event.data));
+                console.log(box);
+                if (box.code === CODE.RECEIVE_MESSAGE) {
+                    let message = this.unpack(box.data, this.proto.message);
+                    console.log('RECEIVE_MESSAGE', message);
+                    this.getMessage(message.id, (data) => {
+                        this.list.push(data);
+                        this.send(CODE.RECEIVED_MESSAGE, box.data);
+                    });
+                } else if (box.code === CODE.DELIVERED_MESSAGE) {
+                    let message = this.unpack(box.data, this.proto.message);
+                    console.log('DELIVERED_MESSAGE', message);
+                } else if (box.code === CODE.DELIVERED_OFFLINE_MESSAGE) {
+                    let message = this.unpack(box.data, this.proto.message);
+                    console.log('DELIVERED_OFFLINE_MESSAGE', message);
+                }
+            },
+            isConnecting() {
+                return this.ws.readyState === 0;
+            },
+            isOpen() {
+                return this.ws.readyState === 1;
+            },
+            close() {
+                this.ws.close();
+            },
+            format(date) {
+                let pattern = "yyyy-MM-dd HH:mm:ss";
+                let o = {
+                    "M+": date.getMonth() + 1,
+                    "d+": date.getDate(),
+                    "H+": date.getHours(),
+                    "m+": date.getMinutes(),
+                    "s+": date.getSeconds(),
+                    "q+": Math.floor((date.getMonth() + 3) / 3),
+                    "S": date.getMilliseconds()
+                };
+                if (/(y+)/.test(pattern)) {
+                    pattern = pattern.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+                }
+                for (let k in o) {
+                    if (new RegExp("(" + k + ")").test(pattern)) {
+                        pattern = pattern.replace(RegExp.$1, (RegExp.$1.length === 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length)));
+                    }
+                }
+                return pattern;
+            },
+            init() {
+                this.URL = window.URL || window.webkitURL || window.mozURL;
+                if (!this.URL) {
+                    alert("Unsupported");
+                    return;
+                }
+                let token = getQueryVariable("access_token");
+                if (token) {
+                    setCookie("access_token", token, 10000000);
+                }
+                protobuf.load("./google/protobuf/any.proto", (err, root) => {
+                    if (err) {
+                        throw err;
+                    }
+                    let chatter = protobuf.parse(CHATTER_PROTO, root);
+                    this.proto.any = root.lookupType("google.protobuf.Any");
+                    this.proto.box = chatter.root.lookupType("Chatter.Box");
+                    this.proto.message = chatter.root.lookupType("Chatter.Message");
+                    this.proto.token = chatter.root.lookupType("Chatter.Token");
+                    this.ws = new WebSocket("ws://localhost:20000/chat?access_token=" + token);
+                    this.ws.binaryType = "arraybuffer";
+                    this.ws.onopen = event => this.onopen(event);
+                    this.ws.onclose = event => this.onclose(event);
+                    this.ws.onmessage = event => this.onmessage(event);
+                });
+            },
+        },
+        created() {
+            this.init();
+        },
+    });
+
+    function $get(uri, params, callback) {
+        handler(axios.get(uri, {params}), callback);
+    }
+
+    function $post(uri, params, callback) {
+        handler(axios.post(uri, params), callback);
+    }
+
+    function $put(uri, params, callback) {
+        handler(axios.put(uri, params), callback);
+    }
+
+    function $patch(uri, params, callback) {
+        handler(axios.patch(uri, params), callback);
+    }
+
+    function $delete(uri, params, callback) {
+        handler(axios.delete(uri, {params}), callback);
+    }
+
+    function handler(o, callback) {
+        o.then((result) => {
+            if (callback) {
+                callback(result.data);
+            }
+        }).catch((error) => {
+            if (callback) {
+                callback({
+                    success: false,
+                    message: error.response.statusText
+                });
+            }
+        });
+    }
+
+    function getCookie(key) {
+        let cookies = document.cookie.split("; ");
+        for (let i = 0; i < cookies.length; i++) {
+            let entry = cookies[i].split("=");
+            if (entry[0] === key) {
+                return decodeURI(entry[1]);
+            }
+        }
+        return null;
+    }
+
+    function setCookie(key, value, time) {
+        let date = new Date();
+        date.setTime(date.getTime() + time);
+        document.cookie = key + "=" + value + "; expires=" + date.toGMTString();
+    }
+
+    function getQueryVariable(variable) {
+        let query = window.location.search.substring(1);
+        let vars = query.split("&");
+        for (let i = 0; i < vars.length; i++) {
+            let pair = vars[i].split("=");
+            if (pair[0] == variable) {
+                return pair[1];
+            }
+        }
+        return false;
+    }
+</script>
+</body>
+</html>
