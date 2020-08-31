@@ -1,6 +1,5 @@
 package io.leego.chat.server;
 
-import io.leego.chat.constant.ServerStatus;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -22,11 +21,15 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractChatServer implements ChatServer {
     private static final Logger logger = LoggerFactory.getLogger(AbstractChatServer.class);
+    public static final int INIT = 0;
+    public static final int STARTING = 1;
+    public static final int RUNNING = 2;
+    public static final int STOPPING = 3;
+    public static final int STOPPED = 4;
     private final int port;
-
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
-    private volatile int status = ServerStatus.INIT;
+    private volatile int status = INIT;
 
     public AbstractChatServer(Integer port) {
         this.port = port;
@@ -34,32 +37,32 @@ public abstract class AbstractChatServer implements ChatServer {
 
     @Override
     public void start() {
-        if (status != ServerStatus.INIT) {
+        if (status != INIT) {
             return;
         }
         synchronized (this) {
-            if (status != ServerStatus.INIT) {
+            if (status != INIT) {
                 return;
             }
-            status = ServerStatus.STARTING;
+            status = STARTING;
             run();
-            status = ServerStatus.RUNNING;
+            status = RUNNING;
             logger.info("Server is running on port(s): {}", port);
         }
     }
 
     @Override
     public void stop() {
-        if (status != ServerStatus.RUNNING
+        if (status != RUNNING
                 || bossGroup == null
                 || workerGroup == null) {
             return;
         }
         synchronized (this) {
-            if (status == ServerStatus.STOPPING) {
+            if (status != RUNNING) {
                 return;
             }
-            status = ServerStatus.STOPPING;
+            status = STOPPING;
             try {
                 bossGroup.shutdownGracefully().sync();
                 workerGroup.shutdownGracefully().sync();
@@ -67,43 +70,59 @@ public abstract class AbstractChatServer implements ChatServer {
                 logger.error("Failed to stop", e);
                 Thread.currentThread().interrupt();
             }
-            status = ServerStatus.STOPPED;
+            status = STOPPED;
             logger.info("Server is stopped");
         }
     }
 
     protected void run() {
-        ServerBootstrap bootstrap = new ServerBootstrap();
         if (Epoll.isAvailable()) {
             logger.info("Epoll is available");
-            bossGroup = new EpollEventLoopGroup();
-            workerGroup = new EpollEventLoopGroup();
-            bootstrap.group(bossGroup, workerGroup)
-                    .channel(EpollServerSocketChannel.class)
-                    .option(EpollChannelOption.SO_REUSEPORT, true);
+            epoll();
         } else {
             logger.info("Nio is available");
-            bossGroup = new NioEventLoopGroup(1);
-            workerGroup = new NioEventLoopGroup();
-            bootstrap.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class);
+            nio();
         }
-        bootstrap.option(ChannelOption.SO_REUSEADDR, true)
+    }
+
+    private void nio() {
+        bossGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
+        ServerBootstrap bootstrap = new ServerBootstrap()
+                .group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .option(ChannelOption.SO_REUSEADDR, true)
                 .option(ChannelOption.SO_BACKLOG, 1024)
                 .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childHandler(getChannelInitializer());
         try {
-            if (Epoll.isAvailable()) {
-                int availableProcessors = Runtime.getRuntime().availableProcessors();
-                logger.info("The number of available processors is {}", availableProcessors);
-                for (int i = 0; i < availableProcessors; i++) {
-                    ChannelFuture future = bootstrap.bind(port).sync();
-                    if (!future.isSuccess()) {
-                        logger.error("Failed to bind on port(s): {}", port);
-                    }
-                }
-            } else {
+            ChannelFuture future = bootstrap.bind(port).sync();
+            if (!future.isSuccess()) {
+                logger.error("Failed to bind on port(s): {}", port);
+            }
+        } catch (InterruptedException e) {
+            logger.error("Failed to run server on port(s): {}", port, e);
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void epoll() {
+        bossGroup = new EpollEventLoopGroup();
+        workerGroup = new EpollEventLoopGroup();
+        ServerBootstrap bootstrap = new ServerBootstrap()
+                .group(bossGroup, workerGroup)
+                .channel(EpollServerSocketChannel.class)
+                .option(EpollChannelOption.SO_REUSEPORT, true)
+                .option(ChannelOption.SO_REUSEADDR, true)
+                .option(ChannelOption.SO_BACKLOG, 1024)
+                .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childHandler(getChannelInitializer());
+        try {
+            int availableProcessors = Runtime.getRuntime().availableProcessors();
+            logger.info("The number of available processors is {}", availableProcessors);
+            for (int i = 0; i < availableProcessors; i++) {
                 ChannelFuture future = bootstrap.bind(port).sync();
                 if (!future.isSuccess()) {
                     logger.error("Failed to bind on port(s): {}", port);

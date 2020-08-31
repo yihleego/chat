@@ -5,6 +5,7 @@ import io.leego.chat.server.SocketChatServer;
 import io.leego.chat.server.WebSocketChatServer;
 import io.leego.chat.server.handle.AuthHandler;
 import io.leego.chat.server.handle.ChatServerHandler;
+import io.leego.chat.server.handle.LoggerHandler;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,13 @@ public class ChatConfiguration implements InitializingBean, DisposableBean {
     private ChatServer chatServer;
 
     @Bean
-    public AuthHandler authenticationHandler() {
+    public AuthHandler authHandler() {
         return new AuthHandler();
+    }
+
+    @Bean
+    public LoggerHandler loggerHandler() {
+        return new LoggerHandler();
     }
 
     @Bean
@@ -36,29 +42,23 @@ public class ChatConfiguration implements InitializingBean, DisposableBean {
     @Bean
     public ChatServer chatServer(ChatProperties properties) {
         if (properties.getWebsocket().isEnabled()) {
-            return createWebSocketChatServer(properties);
+            return new WebSocketChatServer(
+                    properties.getPort(),
+                    properties.getWebsocket().getPath(),
+                    properties.getIdleTimeout(),
+                    properties.getAuthTimeout(),
+                    chatServerHandler(),
+                    authHandler(),
+                    loggerHandler());
         } else {
-            return createSocketChatServer(properties);
+            return new SocketChatServer(
+                    properties.getPort(),
+                    properties.getIdleTimeout(),
+                    properties.getAuthTimeout(),
+                    chatServerHandler(),
+                    authHandler(),
+                    loggerHandler());
         }
-    }
-
-    private SocketChatServer createSocketChatServer(ChatProperties properties) {
-        return new SocketChatServer(
-                properties.getPort(),
-                properties.getIdleTimeout(),
-                properties.getAuthTimeout(),
-                authenticationHandler(),
-                chatServerHandler());
-    }
-
-    private WebSocketChatServer createWebSocketChatServer(ChatProperties properties) {
-        return new WebSocketChatServer(
-                properties.getPort(),
-                properties.getWebsocket().getPath(),
-                properties.getIdleTimeout(),
-                properties.getAuthTimeout(),
-                authenticationHandler(),
-                chatServerHandler());
     }
 
     @Override

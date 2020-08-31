@@ -1,6 +1,7 @@
 package io.leego.chat.server.handle.codec;
 
-import io.netty.buffer.ByteBuf;
+import io.leego.chat.util.ChatFactory;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
@@ -12,11 +13,11 @@ import java.util.List;
  * @author Yihleego
  */
 @ChannelHandler.Sharable
-public class WebSocketProtobufEncoder extends MessageToMessageEncoder<ByteBuf> {
+public class WebSocketFrameBoxEncoder extends MessageToMessageEncoder<ChatFactory.Box> {
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) {
-        out.add(new BinaryWebSocketFrame(msg));
-        msg.retain();
+    protected void encode(ChannelHandlerContext ctx, ChatFactory.Box msg, List<Object> out) {
+        out.add(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(msg.toByteArray())));
     }
+
 }

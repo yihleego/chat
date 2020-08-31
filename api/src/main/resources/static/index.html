@@ -5,113 +5,42 @@
     <meta charset='UTF-8'>
     <meta content='chat' name='description'>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <link href="styles/chat.css" rel="stylesheet">
 </head>
-<style>
-    .item {
-        display: flex;
-        margin-bottom: 10px;
-    }
-
-    .left {
-        flex-direction: row;
-    }
-
-    .right {
-        flex-direction: row-reverse;
-    }
-
-    .right .message {
-        margin-right: 10px;
-    }
-
-    .left .message {
-        margin-left: 10px;
-    }
-
-    .header-img {
-        width: 42px;
-        height: 42px;
-        border-radius: 100px;
-    }
-
-    .message {
-        border-radius: 10px;
-        display: flex;
-        background: #efefef;
-        min-height: 25px;
-        padding: 9px 10px;
-        align-items: center;
-        color: #222121;
-    }
-
-    .input-box {
-        width: 100%;
-        display: flex;
-        padding: 4px 6px;
-        box-sizing: border-box;
-    }
-
-    .input-box textarea {
-        flex: 1;
-        border-radius: 5px;
-        border: 1px #cecece solid;
-        padding: 3px 4px;
-        outline: none;
-    }
-
-    .input-box button {
-        width: 80px;
-        background: #2196F4;
-        border-radius: 5px;
-        border: 1px #fffa solid;
-        color: #ffffff;
-        margin: 0px 6px;
-        outline: none;
-    }
-
-    .input-box button:active {
-        background: #044879;
-    }
-
-    .chat-timer {
-        text-align: center;
-        color: #616161;
-        font-size: 13px;
-    }
-</style>
 <body>
 <main id='app'>
-    <div style=" text-align: center">
-        <h2>{{status === 1 ? 'OK!' : 'NO!'}}</h2>
-        <div style="width: 800px; margin: 0 auto;">
-            <div style="max-height: 400px;overflow-y: auto">
-                <div class="item left" v-for='item in list'>
+    <div class="chat-container" v-if="current.signed">
+        <div class="chat-room">
+            <div class="chat-friend">
+                {{current.username}} {{status === 1 ? 'Online' : 'Offline'}}
+                <div class="friend-box" :class="u.id===recipient?'selected':''" @click="switchUser(u.id)"
+                     v-for="u in users" v-if="u.id!==current.id">
+                    {{u.username}}
+                </div>
+            </div>
+            <div class="chat-record">
+                <div :class="item.sender===current.id?'right':'left'" class="item" v-for='item in displayRecords'>
                     <img class="header-img"/>
                     <span class="message">{{item.content}}</span>
                 </div>
             </div>
             <div class="input-box">
-                <textarea v-model="message.content" @keyup.enter="sendMessage"
-                          rows="3" style="resize: none"></textarea>
-                <button @click="sendMessage">Send</button>
+                <textarea @keypress.enter="sendMessage" @keypress.enter.ctrl="appendBreak" rows="3"
+                          style="resize: none" v-model="message.content"></textarea>
+                <button @click="sendMessage" :disabled="status !== 1">Send</button>
             </div>
+            <div style="clear: both"></div>
         </div>
     </div>
-
-    <!--<div v-for='item in list'>
-        <span class="time">{{item.time}}</span>
-        <span class="name">{{item.sender}}</span>
-        <span class="content">{{item.content}}</span>
-        <span class="status">{{item.sending ? 'sending...' : ''}}</span>
+    <div class="chat-container" v-else>
+        <label title="Select a user">
+            <select v-model="current.id">
+                <option :value="u.id" v-for="u in users">{{u.username}}</option>
+            </select>
+        </label>
+        <br>
+        <button @click="signIn">Sign in</button>
     </div>
-    <input autocomplete="off" clearable="true" maxlength="200" v-model="message.recipient"/>
-    <input autocomplete="off" clearable="true" maxlength="200" v-model="message.content"/>
-    <button @click="sendMessage">Send</button>
-    <br>
-    <br>
-    <button @click="ping">ping</button>
-    <br>
-    <button @click="close">close</button>-->
 </main>
 <script src='scripts/vue.min.js'></script>
 <script src='scripts/axios.min.js'></script>
@@ -128,13 +57,7 @@
         DELIVERED_MESSAGE: 13,
         DELIVERED_OFFLINE_MESSAGE: 14,
     };
-    const CHATTER_PROTO =
-        `syntax = "proto3";
-    import "google/protobuf/any.proto";
-    package Chatter;
-    message Box { google.protobuf.Any data = 1; string message = 2; int32 code = 3; }
-    message Message { string id = 1; int64 recipient = 2; int64 sender = 3; }
-    message Token { string value = 1; }`;
+
     const api = {
         message: {
             get(params, callback) {
@@ -163,31 +86,67 @@
                 message: null,
                 token: null,
             },
+            users: [
+                {id: 1, username: "dante", token: "dante"},
+                {id: 2, username: "virgil", token: "virgil"},
+                {id: 3, username: "nero", token: "nero"},
+            ],
+            current: {
+                id: null,
+                username: null,
+                token: null,
+                signed: false,
+            },
             message: {
                 recipient: null,
                 content: null,
             },
-            list: [],
+            recipient: null,
+            messageRecords: {},
+            displayRecords: [],
             sending: false,
         },
         methods: {
+            signIn() {
+                if (!this.current.id) {
+                    return;
+                }
+                for (let i in this.users) {
+                    let id = this.users[i].id;
+                    this.messageRecords[id] = [];
+                    if (id === this.current.id) {
+                        this.current.username = this.users[i].username;
+                        this.current.token = this.users[i].token;
+                    }
+                }
+                this.current.signed = true;
+                this.switchUser(this.users[0].id);
+                setCookie("access_token", this.current.token, 10000000);
+                this.ws = new WebSocket("ws://localhost:20000/chat?access_token=" + this.current.token);
+                this.ws.binaryType = "arraybuffer";
+                this.ws.onopen = event => this.onopen(event);
+                this.ws.onclose = event => this.onclose(event);
+                this.ws.onmessage = event => this.onmessage(event);
+                setInterval(() => {
+                    this.ping();
+                }, 30000);
+            },
+            switchUser(userId) {
+                this.message.recipient = userId;
+                this.recipient = userId;
+                this.displayRecords = this.messageRecords[userId];
+            },
             sendMessage() {
-                if (this.status === 0) {
-                    return;
-                }
-                if (this.status !== 1) {
-                    return;
-                }
-                if (this.message.content === null || this.message.content === '' || this.sending) {
+                if (this.status !== 1 || this.message.content === null || this.message.content === '' || this.sending) {
                     return;
                 }
                 this.sending = true;
                 let m = {
-                    sender: 'me',
+                    sender: this.current.id,
                     content: this.message.content,
                     sending: 1,
                 };
-                this.list.push(m);
+                this.messageRecords[this.message.recipient].push(m);
                 api.message.save(this.message, (result) => {
                     if (!result.success) {
                         //$notify.error(result.message);
@@ -202,6 +161,9 @@
                     this.message.content = null;
                     this.sending = false;
                 });
+            },
+            appendBreak() {
+                this.message.content += "\n";
             },
             getMessage(id, callback) {
                 api.message.get(id, (result) => {
@@ -227,7 +189,7 @@
                     }
                     let messages = result.data;
                     for (let i in messages) {
-                        this.list.push(messages[i]);
+                        this.messageRecords[messages[i].sender].push(messages[i]);
                     }
                     this.listUnread({anchor: messages[messages.length - 1].id});
                 });
@@ -269,7 +231,7 @@
                     let message = this.unpack(box.data, this.proto.message);
                     console.log('RECEIVE_MESSAGE', message);
                     this.getMessage(message.id, (data) => {
-                        this.list.push(data);
+                        this.messageRecords[data.sender].push(data);
                         this.send(CODE.RECEIVED_MESSAGE, box.data);
                     });
                 } else if (box.code === CODE.DELIVERED_MESSAGE) {
@@ -316,24 +278,22 @@
                     alert("Unsupported");
                     return;
                 }
-                let token = getQueryVariable("access_token");
-                if (token) {
-                    setCookie("access_token", token, 10000000);
-                }
                 protobuf.load("./google/protobuf/any.proto", (err, root) => {
                     if (err) {
                         throw err;
                     }
-                    let chatter = protobuf.parse(CHATTER_PROTO, root);
+                    const proto =
+                        `syntax = "proto3";
+                        import "google/protobuf/any.proto";
+                        package Chatter;
+                        message Box { google.protobuf.Any data = 1; string message = 2; int32 code = 3; }
+                        message Message { string id = 1; int64 recipient = 2; int64 sender = 3; }
+                        message Token { string value = 1; }`;
+                    let chat = protobuf.parse(proto, root);
                     this.proto.any = root.lookupType("google.protobuf.Any");
-                    this.proto.box = chatter.root.lookupType("Chatter.Box");
-                    this.proto.message = chatter.root.lookupType("Chatter.Message");
-                    this.proto.token = chatter.root.lookupType("Chatter.Token");
-                    this.ws = new WebSocket("ws://localhost:20000/chat?access_token=" + token);
-                    this.ws.binaryType = "arraybuffer";
-                    this.ws.onopen = event => this.onopen(event);
-                    this.ws.onclose = event => this.onclose(event);
-                    this.ws.onmessage = event => this.onmessage(event);
+                    this.proto.box = chat.root.lookupType("Chatter.Box");
+                    this.proto.message = chat.root.lookupType("Chatter.Message");
+                    this.proto.token = chat.root.lookupType("Chatter.Token");
                 });
             },
         },

@@ -4,11 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.leego.chat.constant.Constants;
 import io.leego.chat.enums.Code;
-import io.leego.chat.util.ByteBufUtils;
 import io.leego.chat.util.ChatFactory;
-import io.leego.chat.util.ChatUtils;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -18,7 +14,6 @@ import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,55 +24,33 @@ import java.util.concurrent.ConcurrentMap;
 @ChannelHandler.Sharable
 public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(ChatServerHandler.class);
-    protected final ConcurrentMap<Long, ChannelHandlerContext> ctxMap = new ConcurrentHashMap<>(2 << 8);
+    protected final ConcurrentMap<Long, ChannelHandlerContext> contexts = new ConcurrentHashMap<>(1 << 10);
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Client is connected {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
-        }
         put(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Client is disconnected {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
-        }
         remove(ctx);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        logger.error("An error occurred on the client {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx), cause);
     }
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
         if (evt instanceof IdleStateEvent && ((IdleStateEvent) evt).state() == IdleState.READER_IDLE) {
-            logger.warn("Client will be disconnected because no data was either received or sent for a long time {}({}) [id:{}]",
-                    ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
             close(ctx);
         }
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object message) {
-        if (!(message instanceof ByteBuf)) {
+        if (!(message instanceof ChatFactory.Box)) {
+            ReferenceCountUtil.release(message);
             logger.warn("Received empty message from client {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
             return;
         }
-        try {
-            ChatFactory.Box box = ChatFactory.Box.parseFrom(ByteBufUtils.toBytes((ByteBuf) message));
-            process(ctx, box);
-        } catch (Exception e) {
-            logger.error("Failed to parse message", e);
-        } finally {
-            ReferenceCountUtil.release(message);
-        }
-    }
-
-    protected void process(ChannelHandlerContext ctx, ChatFactory.Box box) {
+        ChatFactory.Box box = (ChatFactory.Box) message;
         Code code = Code.getOrDefault(box.getCode(), Code.UNKNOWN);
         switch (code) {
             case HEARTBEAT:
@@ -90,16 +63,16 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
                 receivedMessage(ctx, box);
                 break;
             default:
-                logger.warn("Received unknown message type from client {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
+                logger.warn("Received unknown message from client {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
                 break;
         }
     }
 
     protected void heartbeat(ChannelHandlerContext ctx) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Received heartbeat message type from client {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
+            logger.debug("Received heartbeat from client {}({}) [id:{}]", ctx.channel().id(), ctx.channel().remoteAddress(), getUserId(ctx));
         }
-        send(ctx, ChatUtils.newBox(Code.HEARTBEAT.getCode()));
+        send(ctx, Code.HEARTBEAT);
     }
 
     protected void sendMessage(ChannelHandlerContext ctx, ChatFactory.Box box) {
@@ -128,84 +101,73 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 
     protected <T extends com.google.protobuf.Message> T unpack(Any any, Class<T> clazz, ChannelHandlerContext ctx) {
         if (any == null) {
-            logger.error("Unpacking object cannot be null");
-            close(ctx);
             return null;
         }
         try {
             return any.unpack(clazz);
         } catch (InvalidProtocolBufferException e) {
-            logger.error("", e);
+            logger.error("Failed to unpack", e);
         }
-        close(ctx);
         return null;
     }
 
+    protected void send(ChannelHandlerContext ctx, Code code) {
+        ctx.writeAndFlush(ChatFactory.Box.newBuilder()
+                .setCode(code.getCode())
+                .build());
+    }
+
     protected void send(ChannelHandlerContext ctx, Code code, com.google.protobuf.Message data) {
-        send(ctx, ChatFactory.Box.newBuilder()
+        ctx.writeAndFlush(ChatFactory.Box.newBuilder()
                 .setCode(code.getCode())
                 .setData(Any.pack(data))
-                .build()
-                .toByteArray());
+                .build());
     }
 
-    protected void send(ChannelHandlerContext ctx, ChatFactory.Box box) {
-        send(ctx, box.toByteArray());
-    }
-
-    protected void send(ChannelHandlerContext ctx, byte[] data) {
-        ctx.writeAndFlush(Unpooled.wrappedBuffer(data));
+    protected boolean send(Long target, Code code) {
+        return send(target, ChatFactory.Box.newBuilder()
+                .setCode(code.getCode())
+                .build());
     }
 
     protected boolean send(Long target, Code code, com.google.protobuf.Message data) {
         return send(target, ChatFactory.Box.newBuilder()
                 .setCode(code.getCode())
                 .setData(Any.pack(data))
-                .build()
-                .toByteArray());
+                .build());
     }
 
-    protected boolean send(Long target, ChatFactory.Box box) {
-        return send(target, box.toByteArray());
-    }
-
-    protected boolean send(Long target, byte[] data) {
-        ChannelHandlerContext ctx = ctxMap.get(target);
-        if (ctx != null) {
-            ctx.writeAndFlush(Unpooled.wrappedBuffer(data));
-            return true;
-        } else {
-            return sendToOffline(target, data);
+    protected boolean send(Long target, ChatFactory.Box data) {
+        ChannelHandlerContext ctx = contexts.get(target);
+        if (ctx == null) {
+            return false;
         }
-    }
-
-    protected boolean sendToOffline(Long target, byte[] data) {
-        // ignored
-        return false;
+        ctx.writeAndFlush(data);
+        return true;
     }
 
     protected void close(ChannelHandlerContext ctx) {
-        remove(ctx);
         ctx.close();
     }
 
     protected ChannelHandlerContext remove(ChannelHandlerContext ctx) {
-        for (Map.Entry<Long, ChannelHandlerContext> entry : ctxMap.entrySet()) {
-            Long k = entry.getKey();
-            ChannelHandlerContext v = entry.getValue();
-            if (v == ctx) {
-                return ctxMap.remove(k);
-            }
+        Boolean removed = ctx.channel().attr(Constants.ATTR_REMOVED).get();
+        if (removed == null || !removed) {
+            return contexts.remove(getUserId(ctx));
         }
         return null;
     }
 
     protected void put(ChannelHandlerContext ctx) {
-        ctxMap.putIfAbsent(getUserId(ctx), ctx);
+        ChannelHandlerContext old = contexts.put(getUserId(ctx), ctx);
+        if (old != null && old != ctx) {
+            ctx.channel().attr(Constants.ATTR_REMOVED).setIfAbsent(true);
+            ctx.close();
+        }
     }
 
     protected Long getUserId(ChannelHandlerContext ctx) {
-        return (Long) ctx.channel().attr(Constants.ATTR_USER_ID).get();
+        return ctx.channel().attr(Constants.ATTR_USER_ID).get();
     }
 
 }

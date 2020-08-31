@@ -24,12 +24,14 @@ public class AuthTimeoutHandler extends IdleStateHandler {
     }
 
     @Override
-    protected final void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) {
+    protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) {
         if (evt.state() == IdleState.READER_IDLE) {
             logger.warn("Client authentication timeout {}({})", ctx.channel().id(), ctx.channel().remoteAddress());
             ctx.writeAndFlush(ChatUtils.newBox(Code.UNAUTHENTICATED.getCode()));
             ctx.close();
+            return;
         }
+        ctx.fireUserEventTriggered(evt);
     }
 
 }
