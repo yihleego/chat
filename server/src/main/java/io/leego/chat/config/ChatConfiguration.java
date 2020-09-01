@@ -42,6 +42,7 @@ public class ChatConfiguration implements InitializingBean, DisposableBean {
     @Bean
     public ChatServer chatServer(ChatProperties properties) {
         if (properties.getWebsocket().isEnabled()) {
+            // Creates an instance of WebSocketChatServer.
             return new WebSocketChatServer(
                     properties.getPort(),
                     properties.getWebsocket().getPath(),
@@ -51,6 +52,7 @@ public class ChatConfiguration implements InitializingBean, DisposableBean {
                     authHandler(),
                     loggerHandler());
         } else {
+            // Creates an instance of SocketChatServer.
             return new SocketChatServer(
                     properties.getPort(),
                     properties.getIdleTimeout(),

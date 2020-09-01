@@ -1,6 +1,6 @@
 package io.leego.chat.server.handle;
 
-import io.leego.chat.constant.Constants;
+import io.leego.chat.util.AttrKey;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -53,7 +53,7 @@ public class LoggerHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected Long getUserId(ChannelHandlerContext ctx) {
-        return (Long) ctx.channel().attr(Constants.ATTR_USER_ID).get();
+        return ctx.channel().attr(AttrKey.ATTR_USER_ID).get();
     }
 
 }

@@ -1,10 +1,11 @@
 package io.leego.chat.server.handle;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.leego.chat.Sessions;
+import io.leego.chat.MockedSessions;
+import io.leego.chat.SecurityKey;
 import io.leego.chat.UserDetail;
-import io.leego.chat.constant.Constants;
 import io.leego.chat.enums.Code;
+import io.leego.chat.util.AttrKey;
 import io.leego.chat.util.ChatFactory;
 import io.leego.chat.util.ChatUtils;
 import io.netty.channel.ChannelHandler;
@@ -87,11 +88,11 @@ public class AuthHandler extends ChannelInboundHandlerAdapter {
         for (String param : params) {
             String[] kv = param.split("=");
             if (kv.length == 1) {
-                if (kv[0].equals(Constants.ACCESS_TOKEN)) {
+                if (kv[0].equals(SecurityKey.ACCESS_TOKEN)) {
                     return null;
                 }
             } else if (kv.length == 2) {
-                if (kv[0].equals(Constants.ACCESS_TOKEN)) {
+                if (kv[0].equals(SecurityKey.ACCESS_TOKEN)) {
                     return kv[1];
                 }
             }
@@ -103,12 +104,12 @@ public class AuthHandler extends ChannelInboundHandlerAdapter {
         if (token == null) {
             return false;
         }
-        UserDetail user = Sessions.get(token);
+        UserDetail user = MockedSessions.getByToken(token);
         if (user == null) {
             return false;
         }
-        ctx.channel().attr(Constants.ATTR_USER).set(user);
-        ctx.channel().attr(Constants.ATTR_USER_ID).set(user.getId());
+        ctx.channel().attr(AttrKey.ATTR_USER).set(user);
+        ctx.channel().attr(AttrKey.ATTR_USER_ID).set(user.getId());
         return true;
     }
 

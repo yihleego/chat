@@ -24,7 +24,7 @@ public class MongoConfiguration {
     @EventListener(ContextRefreshedEvent.class)
     public void initIndicesAfterStartup() {
         MappingContext<? extends MongoPersistentEntity<?>, MongoPersistentProperty> mappingContext = mongoTemplate.getConverter().getMappingContext();
-        final IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
+        IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
         mappingContext.getPersistentEntities()
                 .stream()
                 .filter(entity -> entity.isAnnotationPresent(Document.class))

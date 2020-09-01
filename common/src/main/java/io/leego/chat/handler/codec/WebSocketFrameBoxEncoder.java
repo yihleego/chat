@@ -1,4 +1,4 @@
-package io.leego.chat.server.handle.codec;
+package io.leego.chat.handler.codec;
 
 import io.leego.chat.util.ChatFactory;
 import io.netty.buffer.Unpooled;

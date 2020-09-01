@@ -12,7 +12,7 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>server</artifactId>
+    <artifactId>client</artifactId>
 
     <dependencies>
         <dependency>

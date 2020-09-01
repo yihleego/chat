@@ -1,13 +1,13 @@
 package io.leego.chat.server;
 
-import io.leego.chat.constant.HandlerName;
+import io.leego.chat.HandlerName;
+import io.leego.chat.handler.ReadIdleHandler;
+import io.leego.chat.handler.codec.ByteBufBoxDecoder;
+import io.leego.chat.handler.codec.ByteBufBoxEncoder;
 import io.leego.chat.server.handle.AuthHandler;
 import io.leego.chat.server.handle.AuthTimeoutHandler;
 import io.leego.chat.server.handle.ChatServerHandler;
-import io.leego.chat.server.handle.IdleTimeoutHandler;
 import io.leego.chat.server.handle.LoggerHandler;
-import io.leego.chat.server.handle.codec.ByteBufBoxDecoder;
-import io.leego.chat.server.handle.codec.ByteBufBoxEncoder;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -45,11 +45,11 @@ public class SocketChatServer extends AbstractChatServer {
             @Override
             protected void initChannel(SocketChannel channel) {
                 channel.pipeline()
+                        .addLast(HandlerName.SOCKET_DECODER, decoder)
+                        .addLast(HandlerName.SOCKET_ENCODER, encoder)
                         .addLast(HandlerName.AUTH_TIMEOUT_HANDLER, new AuthTimeoutHandler(authTimeout.toMillis(), TimeUnit.MILLISECONDS))
                         .addLast(HandlerName.AUTH_HANDLER, authHandler)
-                        .addLast(HandlerName.WEB_SOCKET_BYTE_BUF_DECODER, decoder)
-                        .addLast(HandlerName.WEB_SOCKET_BYTE_BUF_ENCODER, encoder)
-                        .addLast(HandlerName.IDLE_TIMEOUT_HANDLER, new IdleTimeoutHandler(idleTimeout.toMillis(), TimeUnit.MILLISECONDS))
+                        .addLast(HandlerName.READ_IDLE_HANDLER, new ReadIdleHandler(idleTimeout.toMillis(), TimeUnit.MILLISECONDS))
                         .addLast(HandlerName.LOGGER_HANDLER, loggerHandler)
                         .addLast(HandlerName.CHAT_SERVER_HANDLER, chatServerHandler);
             }

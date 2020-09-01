@@ -60,6 +60,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authHandlerInterceptor())
+                .excludePathPatterns("/sessions")
                 .excludePathPatterns("/index.html/**", "/scripts/**");
     }
 

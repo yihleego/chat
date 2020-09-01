@@ -12,7 +12,7 @@ import java.time.Duration;
 public class ChatProperties {
     private Integer port = 20000;
     private Duration idleTimeout = Duration.ofSeconds(60L);
-    private Duration authTimeout = Duration.ofSeconds(10L);
+    private Duration authTimeout = Duration.ofSeconds(5L);
     @NestedConfigurationProperty
     private Socket socket = new Socket();
     @NestedConfigurationProperty

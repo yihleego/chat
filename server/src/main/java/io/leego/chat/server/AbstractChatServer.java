@@ -21,11 +21,11 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractChatServer implements ChatServer {
     private static final Logger logger = LoggerFactory.getLogger(AbstractChatServer.class);
-    public static final int INIT = 0;
-    public static final int STARTING = 1;
-    public static final int RUNNING = 2;
-    public static final int STOPPING = 3;
-    public static final int STOPPED = 4;
+    private static final int INIT = 0;
+    private static final int STARTING = 1;
+    private static final int RUNNING = 2;
+    private static final int STOPPING = 3;
+    private static final int STOPPED = 4;
     private final int port;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;

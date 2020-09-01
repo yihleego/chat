@@ -35,7 +35,7 @@ public final class UserUtils {
     }
 
     private static Object getAttribute(String name) {
-        return getHttpServletRequest().getAttribute(name);
+        return getHttpServletRequest().getSession().getAttribute(name);
     }
 
     private static <T> T getAttribute(String name, Class<T> type) {
@@ -47,11 +47,11 @@ public final class UserUtils {
     }
 
     private static void setAttribute(String name, Object o) {
-        getHttpServletRequest().setAttribute(name, o);
+        getHttpServletRequest().getSession().setAttribute(name, o);
     }
 
     private static void removeAttribute(String name) {
-        getHttpServletRequest().removeAttribute(name);
+        getHttpServletRequest().getSession().removeAttribute(name);
     }
 
 }

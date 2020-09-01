@@ -4,14 +4,16 @@ public class UserDetail {
     private Long id;
     private String username;
     private String nickname;
+    private String token;
 
     public UserDetail() {
     }
 
-    public UserDetail(Long id, String username, String nickname) {
+    public UserDetail(Long id, String username, String nickname, String token) {
         this.id = id;
         this.username = username;
         this.nickname = nickname;
+        this.token = token;
     }
 
     public Long getId() {
@@ -38,4 +40,11 @@ public class UserDetail {
         this.nickname = nickname;
     }
 
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
 }

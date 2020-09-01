@@ -2,8 +2,8 @@ package io.leego.chat.server.handle;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.leego.chat.constant.Constants;
 import io.leego.chat.enums.Code;
+import io.leego.chat.util.AttrKey;
 import io.leego.chat.util.ChatFactory;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -76,7 +76,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected void sendMessage(ChannelHandlerContext ctx, ChatFactory.Box box) {
-        ChatFactory.Message message = unpack(box.getData(), ChatFactory.Message.class, ctx);
+        ChatFactory.Message message = unpack(box.getData(), ChatFactory.Message.class);
         if (message == null) {
             return;
         }
@@ -92,14 +92,14 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected void receivedMessage(ChannelHandlerContext ctx, ChatFactory.Box box) {
-        ChatFactory.Message message = unpack(box.getData(), ChatFactory.Message.class, ctx);
+        ChatFactory.Message message = unpack(box.getData(), ChatFactory.Message.class);
         if (message == null) {
             return;
         }
         send(message.getSender(), Code.DELIVERED_MESSAGE, message);
     }
 
-    protected <T extends com.google.protobuf.Message> T unpack(Any any, Class<T> clazz, ChannelHandlerContext ctx) {
+    protected <T extends com.google.protobuf.Message> T unpack(Any any, Class<T> clazz) {
         if (any == null) {
             return null;
         }
@@ -151,7 +151,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected ChannelHandlerContext remove(ChannelHandlerContext ctx) {
-        Boolean removed = ctx.channel().attr(Constants.ATTR_REMOVED).get();
+        Boolean removed = ctx.channel().attr(AttrKey.ATTR_REMOVED).get();
         if (removed == null || !removed) {
             return contexts.remove(getUserId(ctx));
         }
@@ -161,13 +161,13 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     protected void put(ChannelHandlerContext ctx) {
         ChannelHandlerContext old = contexts.put(getUserId(ctx), ctx);
         if (old != null && old != ctx) {
-            ctx.channel().attr(Constants.ATTR_REMOVED).setIfAbsent(true);
+            ctx.channel().attr(AttrKey.ATTR_REMOVED).setIfAbsent(true);
             ctx.close();
         }
     }
 
     protected Long getUserId(ChannelHandlerContext ctx) {
-        return ctx.channel().attr(Constants.ATTR_USER_ID).get();
+        return ctx.channel().attr(AttrKey.ATTR_USER_ID).get();
     }
 
 }
