@@ -1,0 +1,44 @@
+@startuml
+
+actor "Sender" as s
+actor "Recipient" as r
+participant "HTTP API" as http
+participant "IM Server" as server
+database Database as db
+
+autonumber
+
+s -> http : 请求保存消息
+activate s
+activate http
+http -> db : 持久化消息
+activate db
+db --> http : 返回持久化结果
+deactivate db
+http --> s : 返回保存消息结果
+deactivate http
+s -> server : 发送消息至服务端
+activate server
+server -> server : 判断接收者是否在线(在线)
+activate server
+deactivate server
+server -> r : 发送消息至接收者
+activate r
+deactivate server
+r -> http : 请求标记消息为已读
+activate http
+http -> db : 更新消息为已读
+activate db
+db ->> http : 返回消息更新结果
+deactivate db
+http --> r : 返回标记消息结果
+deactivate http
+r ->> server : 通知服务端消息已被接收
+activate server
+deactivate http
+deactivate r
+server --> s : 通知发送者消息已被接收
+deactivate server
+deactivate s
+
+@enduml

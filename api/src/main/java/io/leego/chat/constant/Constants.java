@@ -18,7 +18,7 @@ public final class Constants {
 
     public static final class MessageTimestamp {
         public static final String ID = "_id";
-        public static final String OWNER = "owner";
+        public static final String USER_ID = "user_id";
         public static final String TIME = "time";
     }
 

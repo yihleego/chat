@@ -1,4 +1,4 @@
-package io.leego.chat;
+package io.leego.chat.util;
 
 /**
  * @author Yihleego
@@ -19,6 +19,7 @@ public final class HandlerName {
     public static final String AUTH_TIMEOUT_HANDLER = "authTimeoutHandler";
     public static final String AUTH_HANDLER = "authHandler";
     public static final String LOGGER_HANDLER = "loggerHandler";
+    public static final String ROUTE_HANDLER = "routeHandler";
     public static final String CHAT_SERVER_HANDLER = "chatServerHandler";
     public static final String CHAT_CLIENT_HANDLER = "chatClientHandler";
 

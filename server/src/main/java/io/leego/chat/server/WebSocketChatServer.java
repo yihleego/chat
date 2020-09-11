@@ -1,12 +1,12 @@
 package io.leego.chat.server;
 
-import io.leego.chat.HandlerName;
-import io.leego.chat.handler.ReadIdleHandler;
-import io.leego.chat.handler.codec.WebSocketFrameBoxDecoder;
-import io.leego.chat.handler.codec.WebSocketFrameBoxEncoder;
 import io.leego.chat.server.handle.AuthHandler;
 import io.leego.chat.server.handle.ChatServerHandler;
 import io.leego.chat.server.handle.LoggerHandler;
+import io.leego.chat.server.handle.ReadIdleHandler;
+import io.leego.chat.server.handle.codec.WebSocketFrameBoxDecoder;
+import io.leego.chat.server.handle.codec.WebSocketFrameBoxEncoder;
+import io.leego.chat.util.HandlerName;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.MessageToMessageDecoder;

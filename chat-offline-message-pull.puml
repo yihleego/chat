@@ -1,0 +1,57 @@
+@startuml
+
+actor "Recipient" as r
+participant "HTTP API" as http
+database Database as db
+
+
+r -> http : 请求离线消息(1)
+activate r
+activate http
+http -> db : 查询离线消息(1)
+activate db
+db --> http : 返回离线消息(1)
+deactivate db
+http --> r : 返回离线消息(1)
+deactivate http
+r -> r : 判断离线消息(1)是否为空(不为空)
+activate r
+deactivate r
+r -> http : 标记离线消息(1)为已读，请求离线消息(2)
+activate http
+http -> db : 更新离线消息(1)为已读
+activate db
+db --> http : 返回离线消息(1)更新结果
+deactivate db
+http -> db : 查询离线消息(2)
+activate db
+db --> http : 返回离线消息(2)
+deactivate db
+http --> r : 返回离线消息(2)
+deactivate http
+
+...
+
+r -> r : 判断离线消息(n-1)是否为空
+activate r
+deactivate r
+r -> http : 标记离线消息(n-1)为已读，请求离线消息(n)
+activate http
+http -> db : 更新离线消息(n-1)为已读
+activate db
+db --> http : 返回离线消息(n-1)更新结果
+deactivate db
+http -> db : 查询离线消息(n)
+activate db
+db --> http : 返回离线消息(n)
+deactivate db
+http --> r : 返回离线消息(n)
+deactivate http
+
+r -> r : 判断离线消息(n)是否为空(为空)
+activate r
+deactivate r
+
+deactivate r
+
+@enduml

@@ -1,4 +1,4 @@
-package io.leego.chat;
+package io.leego.chat.security;
 
 /**
  * @author Yihleego

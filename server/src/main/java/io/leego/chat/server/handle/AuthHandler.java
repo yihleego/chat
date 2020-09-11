@@ -1,12 +1,10 @@
 package io.leego.chat.server.handle;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.leego.chat.MockedSessions;
-import io.leego.chat.SecurityKey;
-import io.leego.chat.UserDetail;
 import io.leego.chat.enums.Code;
+import io.leego.chat.security.SecurityKey;
+import io.leego.chat.security.UserDetail;
 import io.leego.chat.util.AttrKey;
-import io.leego.chat.util.ChatFactory;
 import io.leego.chat.util.ChatUtils;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -34,49 +32,29 @@ public class AuthHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        logger.error("An error occurred when the client is authenticating {}({})", ctx.channel().id(), ctx.channel().remoteAddress(), cause);
-        ctx.close();
+        logger.error("An error occurred while authenticating {}({})", ctx.channel().id(), ctx.channel().remoteAddress(), cause);
+        sendUnauthenticatedAndClose(ctx);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object message) {
-        if (message instanceof ChatFactory.Box) {
-            try {
-                ChatFactory.Box box = (ChatFactory.Box) message;
-                if (box.getCode() != Code.AUTHENTICATION.getCode()) {
-                    sendUnauthenticatedAndClose(ctx);
-                    return;
-                }
-                String token = box.getData().unpack(ChatFactory.Token.class).getValue();
-                if (!isAuthenticated(ctx, token)) {
-                    sendUnauthenticatedAndClose(ctx);
-                    return;
-                }
-                ctx.pipeline().remove(AuthTimeoutHandler.class);
-                ctx.pipeline().remove(this.getClass());
-                ctx.fireChannelActive();
-                sendAuthenticated(ctx);
-            } catch (InvalidProtocolBufferException e) {
-                logger.error("Failed to parse message", e);
-                sendUnauthenticatedAndClose(ctx);
-            }
-        } else if (message instanceof HttpRequest) {
-            HttpRequest request = (HttpRequest) message;
-            String token = getParamToken(request.uri());
-            if (!isAuthenticated(ctx, token)) {
-                sendUnauthenticatedAndClose(ctx);
-                return;
-            }
-            ctx.pipeline().remove(this.getClass());
-            ctx.fireChannelRead(message);
-            ctx.fireChannelActive();
-        } else {
+        if (!(message instanceof HttpRequest)) {
             logger.warn("Received non-authentication message from client {}({})", ctx.channel().id(), ctx.channel().remoteAddress());
             sendUnauthenticatedAndClose(ctx);
+            return;
         }
+        String token = getParamToken((HttpRequest) message);
+        if (!isAuthenticated(ctx, token)) {
+            sendUnauthenticatedAndClose(ctx);
+            return;
+        }
+        ctx.pipeline().remove(this.getClass());
+        ctx.fireChannelRead(message);
+        ctx.fireChannelActive();
     }
 
-    private String getParamToken(String uri) {
+    private String getParamToken(HttpRequest request) {
+        String uri = request.uri();
         if (uri == null || uri.indexOf('?') < 0) {
             return null;
         }
@@ -114,12 +92,8 @@ public class AuthHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void sendUnauthenticatedAndClose(ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(ChatUtils.newBox(Code.UNAUTHENTICATED.getCode()));
+        ctx.writeAndFlush(ChatUtils.boxed(Code.UNAUTHENTICATED.getCode()));
         ctx.close();
-    }
-
-    private void sendAuthenticated(ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(ChatUtils.newBox(Code.AUTHENTICATED.getCode()));
     }
 
 }

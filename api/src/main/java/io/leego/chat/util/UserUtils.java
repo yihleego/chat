@@ -1,6 +1,6 @@
 package io.leego.chat.util;
 
-import io.leego.chat.UserDetail;
+import io.leego.chat.security.UserDetail;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 

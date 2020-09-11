@@ -1,4 +1,4 @@
-package io.leego.chat.handler;
+package io.leego.chat.server.handle;
 
 import io.netty.handler.timeout.IdleStateHandler;
 

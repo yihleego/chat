@@ -1,5 +1,7 @@
 package io.leego.chat;
 
+import io.leego.chat.security.UserDetail;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

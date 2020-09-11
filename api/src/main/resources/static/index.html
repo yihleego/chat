@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>Chat</title>
+    <meta charset='UTF-8'>
+    <meta content='chat' name='description'>
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <link href="styles/chat.css" rel="stylesheet">
+</head>
+<body>
+<main id='app'>
+    <div class="main">
+        <div class="sign-box" v-if="!user.signed">
+            <span class="sign-title">Sign in to Chat</span>
+            <!--<input v-model="sign.username" type="text" @keyup.enter="signIn" required="required" maxlength="18" placeholder="Username">-->
+            <select id="username" v-model="sign.username">
+                <option :value="u" v-for="(u,i) in users">{{u}}</option>
+            </select>
+            <input @keyup.enter="signIn" disabled="disabled" maxlength="18" placeholder="Password" required="required" type="password" v-model="sign.password" value="123456">
+            <button @click="signIn" class="btn btn-sign">Sign in</button>
+        </div>
+        <div class="char-room" v-else>
+            <div class="panel">
+                <div class="header">
+                    <div class="avatar">
+                        <img class="img" src="images/avatar.png">
+                    </div>
+                    <div class="info">
+                        <h3 class="nickname">
+                            <span class="display">{{user.nickname}}</span>
+                            <span class="opt">
+                                <img v-if="connected" @click="close" class="icon" src="images/online.svg">
+                                <img v-else class="icon" src="images/offline.svg">
+                                <img @click="signOut" class="icon" src="images/exit.svg">
+                            </span>
+                        </h3>
+                    </div>
+                </div>
+                <div class="tab">
+                </div>
+                <div class="contact-list">
+                    <div v-for="contact in contacts" :class="contact.id === recipient.id ? 'active' : ''" @click="switchUser(contact)" class="contact-item">
+                        <div class="avatar">
+                            <img class="img" src="images/avatar.png">
+                        </div>
+                        <div class="info">
+                            <h3 class="nickname">
+                                <span>{{contact.nickname}}</span>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat">
+                <div class="title">
+                    <span class="">{{recipient.nickname}}</span>
+                </div>
+                <div class="message-list" id="message-list">
+                    <div v-for="record in displayRecords">
+                        <div v-if="record.isTime" class="timer">
+                            <div class="content">{{record.time}}</div>
+                        </div>
+                        <div v-else :class="record.sender === user.id ? 'right' : 'left'" class="message">
+                            <div class="avatar">
+                                <img class="img" src="images/avatar.png">
+                            </div>
+                            <!--{{record.status}} {{record.tries}}-->
+                            <div class="bubble" :class="record.sender === user.id ? 'primary' : ''">
+                                <pre>{{record.content}}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <div class="toolbar">
+                        <span class="icon"><img src="images/emoji.svg"></span>
+                        <span class="icon"><img src="images/file.svg"></span>
+                    </div>
+                    <div class="content">
+                        <textarea id="edit-box" v-model="message.content" @keydown="handleKeyCode($event)" class="edit-box" maxlength="2048"></textarea>
+                    </div>
+                    <div class="action">
+                        <span class="desc">Press Ctrl+Enter to start a new line</span>
+                        <button class="btn btn-send" @click="saveMessage" :disabled="!connected">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script src='scripts/vue.min.js'></script>
+<script src='scripts/axios.min.js'></script>
+<script src="scripts/protobuf.min.js"></script>
+<script>
+    const api = {
+        account: {
+            signIn(params, callback) {
+                handler(axios.post('/sessions', params), callback);
+            },
+            signOut(callback) {
+                handler(axios.delete('/sessions', null), callback);
+            },
+            getUser(callback) {
+                handler(axios.get('/sessions', null), callback);
+            },
+        },
+        contact: {
+            get(callback) {
+                handler(axios.get('/contacts', null), callback);
+            },
+        },
+        message: {
+            get(id, callback) {
+                handler(axios.get('/messages/' + id, null), callback);
+            },
+            save(params, callback) {
+                handler(axios.post('/messages', params), callback);
+            },
+            mark(id, callback) {
+                handler(axios.patch('/messages/' + id, null), callback);
+            },
+            listUnread(params, callback) {
+                handler(axios.get('/messages/unread', {params}), callback);
+            },
+        },
+    };
+    const vm = new Vue({
+        el: '#app',
+        data: {
+            path: "/",
+            ws: null,
+            connected: false,
+            proto: {
+                box: null,
+                message: null,
+                token: null,
+            },
+            codes: {
+                UNKNOWN: 0,
+                ERROR: 1,
+                HEARTBEAT: 2,
+                AUTHENTICATION: 3,
+                KICKED_OUT: 6,
+                SEND_MESSAGE: 10,
+                RECEIVE_MESSAGE: 11,
+                RECEIVED_MESSAGE: 12,
+                DELIVERED_MESSAGE: 13,
+                DELIVERED_OFFLINE_MESSAGE: 14,
+            },
+            messageStatus: {
+                OK: 1,
+                SENDING: 2,
+                UNSAVED: 3,
+                FAILED: 4,
+            },
+            users: [
+                "dante",
+                "vergil",
+                "nero",
+                "sparda",
+                "lady",
+                "trish",
+                "lucia",
+                "beryl",
+                "credo",
+                "kyrie",
+                "nico",
+            ],
+            sign: {
+                username: "dante",
+                password: 123456,
+            },
+            user: {
+                id: null,
+                username: null,
+                token: null,
+                signed: false,
+            },
+            contacts: [],
+            message: {
+                content: null,
+            },
+            recipient: {
+                id: null,
+                nickname: null,
+            },
+            totalRecords: {},
+            displayRecords: [],
+            sending: false,
+            tasks: {},
+            timers: {},
+        },
+        methods: {
+            ensure() {
+                api.account.getUser((result) => {
+                    if (!result.success) {
+                        return;
+                    }
+                    this.user = result.data;
+                    this.user.signed = true;
+                    this.connect();
+                });
+            },
+            signIn() {
+                if (!this.sign.username) {
+                    return;
+                }
+                api.account.signIn(this.sign, (result) => {
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        return;
+                    }
+                    this.user = result.data;
+                    this.user.signed = true;
+                    this.connect();
+                });
+            },
+            signOut() {
+                if (!this.user.signed) {
+                    return;
+                }
+                this.close();
+                this.user.signed = false;
+                api.account.signOut((result) => {
+                    console.log("Sign Out", result)
+                });
+            },
+            connect() {
+                api.contact.get((result) => {
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        return;
+                    }
+                    this.contacts = result.data;
+                    if (this.contacts.length > 0) {
+                        this.switchUser(this.contacts[0]);
+                    }
+                });
+                this.ws = new WebSocket("ws://localhost:20000" + this.path + "?access_token=" + this.user.token);
+                this.ws.binaryType = "arraybuffer";
+                this.ws.onopen = event => this.onopen(event);
+                this.ws.onclose = event => this.onclose(event);
+                this.ws.onmessage = event => this.onmessage(event);
+                this.tasks.ping = setInterval(() => {
+                    this.ping();
+                }, 30000);
+            },
+            close() {
+                for (let key in this.tasks) {
+                    console.log("Removed task", key);
+                    clearInterval(this.tasks[key]);
+                    delete this.tasks[key];
+                }
+                if (this.ws.readyState === 1) {
+                    this.ws.close();
+                }
+            },
+            switchUser(user) {
+                this.recipient = user;
+                this.displayRecords = this.getUserRecords(user.id);
+                this.scrollToBottom();
+            },
+            handleKeyCode(event) {
+                if (event.key === 'Enter') {
+                    if (!event.ctrlKey) {
+                        event.preventDefault();
+                        this.saveMessage();
+                    } else {
+                        this.message.content += '\n';
+                    }
+                }
+            },
+            saveMessage() {
+                document.getElementById('edit-box').focus();
+                if (!this.connected
+                    || this.sending
+                    || this.message.content === null
+                    || this.message.content === '') {
+                    return;
+                }
+                let recipient = this.recipient.id;
+                let content = this.message.content;
+                this.sending = true;
+                this.message.content = null;
+                let displayMessage = {
+                    sender: this.user.id,
+                    recipient: recipient,
+                    content: content,
+                    status: this.messageStatus.SENDING,
+                    time: this.format(new Date()),
+                    tries: 0,
+                };
+                this.appendMessage(recipient, displayMessage);
+                let saveMessage = {
+                    recipient: recipient,
+                    content: content,
+                };
+                api.message.save(saveMessage, (result) => {
+                    this.sending = false;
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        displayMessage.status = this.messageStatus.UNSAVED;
+                        return;
+                    }
+                    let message = result.data;
+                    let key = 'msg_check_' + message.id;
+                    this.tasks[key] = setInterval(() => {
+                        displayMessage.tries++;
+                        if (displayMessage.tries === 3) {
+                            clearInterval(this.tasks[key]);
+                            delete this.tasks[key];
+                            if (displayMessage.status === this.messageStatus.SENDING) {
+                                displayMessage.status = this.messageStatus.FAILED;
+                            }
+                        }
+                    }, 3000);
+                    displayMessage.id = message.id;
+                    this.sendMessage({id: message.id, recipient: message.recipient, sender: message.sender});
+                });
+            },
+            readMessage(id, callback) {
+                api.message.get(id, (result) => {
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        return;
+                    }
+                    callback(result.data);
+                    api.message.mark(id, (ignored) => {
+                    });
+                });
+            },
+            listUnread(params) {
+                api.message.listUnread(params, (result) => {
+                    if (!result.success) {
+                        //$notify.error(result.message);
+                        return;
+                    }
+                    if (result.data.length === 0) {
+                        return;
+                    }
+                    let messages = result.data;
+                    for (let i in messages) {
+                        this.appendMessage(messages[i].sender, messages[i]);
+                    }
+                    this.listUnread({anchor: messages[messages.length - 1].id});
+                });
+            },
+            appendMessage(userId, message) {
+                message.timestamp = new Date().getTime();
+                let records = this.getUserRecords(userId);
+                if (records.length > 0 && !records.isTime) {
+                    let lastTimestamp = records[records.length - 1].timestamp;
+                    if (message.timestamp - lastTimestamp > 5 * 60 * 1000) {
+                        records.push({time: message.time, isTime: true});
+                    }
+                }
+                records.push(message);
+                this.scrollToBottom();
+            },
+            deliveredMessage(message) {
+                let key = 'msg_check_' + message.id;
+                clearInterval(this.tasks[key]);
+                delete this.tasks[key];
+                let records = this.getUserRecords(message.recipient);
+                for (let i = records.length - 1; i < records.length; i--) {
+                    if (records[i].id === message.id) {
+                        if (records[i].status === this.messageStatus.SENDING) {
+                            records[i].status = this.messageStatus.OK;
+                        }
+                        break
+                    }
+                }
+            },
+            getUserRecords(userId) {
+                let records = this.totalRecords[userId];
+                if (!records) {
+                    records = []
+                    this.totalRecords[userId] = records;
+                }
+                return records;
+            },
+            scrollToBottom() {
+                let box = this.$el.querySelector("#message-list");
+                if (box.scrollTop <= 1 || Math.abs(box.scrollTop + box.offsetHeight - box.scrollHeight) <= 10) {
+                    this.$nextTick(() => {
+                        //console.log(box.scrollTop, box.scrollHeight, box.offsetHeight, box.scrollTop + box.offsetHeight - box.scrollHeight);
+                        box.scrollTop = box.scrollHeight;
+                    })
+                }
+            },
+            ping() {
+                this.send(this.codes.HEARTBEAT);
+            },
+            sendMessage(msg) {
+                this.send(this.codes.SEND_MESSAGE, msg, this.proto.message);
+            },
+            receivedMessage(msg) {
+                this.send(this.codes.RECEIVED_MESSAGE, msg, this.proto.message);
+            },
+            send(code, value, type) {
+                let data = value && type ? this.pack(value, type) : null;
+                let buffer = this.proto.box.encode({code: code, data: data}).finish();
+                this.ws.send(buffer);
+            },
+            pack(value, type) {
+                let encodedValue = type.encode(value).finish();
+                return this.proto.any.create({value: encodedValue});
+            },
+            unpack(value, type) {
+                return type.decode(value);
+            },
+            onopen(event) {
+                console.log("Connected", event);
+                this.connected = true;
+                this.listUnread(null);
+            },
+            onclose(event) {
+                console.log("Closed", event);
+                this.connected = false;
+                this.close();
+            },
+            onmessage(event) {
+                let buffer = new Uint8Array(event.data);
+                let box = this.unpack(buffer, this.proto.box);
+                if (box.code === this.codes.RECEIVE_MESSAGE) {
+                    let message = this.unpack(box.data.value, this.proto.message);
+                    console.log('RECEIVE_MESSAGE', message);
+                    this.readMessage(message.id, (msg) => {
+                        this.appendMessage(msg.sender, msg);
+                        this.receivedMessage(message);
+                    });
+                } else if (box.code === this.codes.DELIVERED_MESSAGE) {
+                    let message = this.unpack(box.data.value, this.proto.message);
+                    console.log('DELIVERED_MESSAGE', message);
+                    this.deliveredMessage(message);
+                } else if (box.code === this.codes.DELIVERED_OFFLINE_MESSAGE) {
+                    let message = this.unpack(box.data.value, this.proto.message);
+                    console.log('DELIVERED_OFFLINE_MESSAGE', message);
+                    this.deliveredMessage(message);
+                } else if (box.code === this.codes.HEARTBEAT) {
+                    console.log('HEARTBEAT');
+                } else if (box.code === this.codes.KICKED_OUT) {
+                    console.log('KICKED_OUT');
+                } else {
+                    console.log(box);
+                }
+            },
+            format(date) {
+                let pattern = "yyyy-MM-dd HH:mm:ss";
+                let o = {
+                    "M+": date.getMonth() + 1,
+                    "d+": date.getDate(),
+                    "H+": date.getHours(),
+                    "m+": date.getMinutes(),
+                    "s+": date.getSeconds(),
+                    "q+": Math.floor((date.getMonth() + 3) / 3),
+                    "S": date.getMilliseconds()
+                };
+                if (/(y+)/.test(pattern)) {
+                    pattern = pattern.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+                }
+                for (let k in o) {
+                    if (new RegExp("(" + k + ")").test(pattern)) {
+                        pattern = pattern.replace(RegExp.$1, (RegExp.$1.length === 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length)));
+                    }
+                }
+                return pattern;
+            },
+            init() {
+                protobuf.load("./google/protobuf/any.proto", (err, root) => {
+                    if (err) {
+                        throw err;
+                    }
+                    const proto =
+                        `syntax = "proto3";
+                        import "google/protobuf/any.proto";
+                        package Chatter;
+                        message Box { google.protobuf.Any data = 1; string message = 2; int32 code = 3; }
+                        message Message { string id = 1; int64 recipient = 2; int64 sender = 3; }
+                        message Token { string value = 1; }`;
+                    let chat = protobuf.parse(proto, root);
+                    this.proto.any = root.lookupType("google.protobuf.Any");
+                    this.proto.box = chat.root.lookupType("Chatter.Box");
+                    this.proto.message = chat.root.lookupType("Chatter.Message");
+                    this.proto.token = chat.root.lookupType("Chatter.Token");
+                    this.ensure();
+                });
+            },
+        },
+        created() {
+            this.init();
+        },
+    });
+
+    function handler(o, callback) {
+        o.then((result) => {
+            if (callback) {
+                callback(result.data);
+            }
+        }).catch((error) => {
+            if (callback) {
+                callback({
+                    success: false,
+                    message: error.response.statusText
+                });
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

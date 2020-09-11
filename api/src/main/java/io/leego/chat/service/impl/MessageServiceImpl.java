@@ -1,7 +1,7 @@
 package io.leego.chat.service.impl;
 
 import io.leego.chat.Result;
-import io.leego.chat.enums.MessageStatus;
+import io.leego.chat.enums.MessageStatusEnum;
 import io.leego.chat.manager.MessageManager;
 import io.leego.chat.pojo.dto.MessageSaveDTO;
 import io.leego.chat.pojo.entity.Message;
@@ -34,12 +34,19 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Result<Message> saveMessage(MessageSaveDTO save) {
+        if (save.getContent() == null) {
+            return Result.buildFailure("Message content cannot be empty");
+        }
+        if (save.getContent().length() > 2048) {
+            return Result.buildFailure("Message content is too long");
+        }
         Message message = new Message();
         message.setSender(getUserId());
         message.setRecipient(save.getRecipient());
         message.setContent(save.getContent());
         message.setTime(LocalDateTime.now());
-        message.setStatus(MessageStatus.UNREAD.getCode());
+        message.setType(save.getType());
+        message.setStatus(MessageStatusEnum.UNREAD.getCode());
         return Result.buildSuccess(messageManager.saveMessage(message));
     }
 
@@ -52,7 +59,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public Result<List<Message>> listUnreadMessage(String anchor) {
         Long userId = getUserId();
-        MessageTimestamp timestamp = messageManager.getMessageTimestampByOwner(userId);
+        MessageTimestamp timestamp = messageManager.getMessageTimestampByUserId(userId);
         LocalDateTime lastTime = timestamp != null ? timestamp.getTime() : null;
         if (anchor != null) {
             Message lastMessage = messageManager.getMessage(anchor, userId);

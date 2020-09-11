@@ -13,6 +13,7 @@ public enum Code {
     AUTHENTICATION(3, "Authentication"),
     AUTHENTICATED(4, "Authenticated"),
     UNAUTHENTICATED(5, "Unauthenticated"),
+    KICKED_OUT(6, "Kicked Out"),
     SEND_MESSAGE(10, "Send Message"),
     RECEIVE_MESSAGE(11, "Receive Message"),
     RECEIVED_MESSAGE(12, "Received Message"),

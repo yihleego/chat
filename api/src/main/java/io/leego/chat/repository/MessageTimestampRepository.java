@@ -8,6 +8,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  */
 public interface MessageTimestampRepository extends MongoRepository<MessageTimestamp, String> {
 
-    MessageTimestamp getByOwner(long owner);
+    MessageTimestamp getByUserId(long userId);
 
 }

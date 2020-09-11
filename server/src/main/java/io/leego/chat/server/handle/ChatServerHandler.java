@@ -1,10 +1,10 @@
 package io.leego.chat.server.handle;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.leego.chat.enums.Code;
 import io.leego.chat.util.AttrKey;
 import io.leego.chat.util.ChatFactory;
+import io.leego.chat.util.ChatUtils;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -76,7 +76,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected void sendMessage(ChannelHandlerContext ctx, ChatFactory.Box box) {
-        ChatFactory.Message message = unpack(box.getData(), ChatFactory.Message.class);
+        ChatFactory.Message message = getMessage(box);
         if (message == null) {
             return;
         }
@@ -92,57 +92,44 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected void receivedMessage(ChannelHandlerContext ctx, ChatFactory.Box box) {
-        ChatFactory.Message message = unpack(box.getData(), ChatFactory.Message.class);
+        ChatFactory.Message message = getMessage(box);
         if (message == null) {
             return;
         }
         send(message.getSender(), Code.DELIVERED_MESSAGE, message);
     }
 
-    protected <T extends com.google.protobuf.Message> T unpack(Any any, Class<T> clazz) {
-        if (any == null) {
-            return null;
-        }
+    protected ChatFactory.Message getMessage(ChatFactory.Box box) {
         try {
-            return any.unpack(clazz);
+            return ChatFactory.Message.parseFrom(box.getData().getValue());
         } catch (InvalidProtocolBufferException e) {
-            logger.error("Failed to unpack", e);
+            logger.error("Failed to parse", e);
         }
         return null;
     }
 
     protected void send(ChannelHandlerContext ctx, Code code) {
-        ctx.writeAndFlush(ChatFactory.Box.newBuilder()
-                .setCode(code.getCode())
-                .build());
+        ctx.writeAndFlush(ChatUtils.boxed(code));
     }
 
     protected void send(ChannelHandlerContext ctx, Code code, com.google.protobuf.Message data) {
-        ctx.writeAndFlush(ChatFactory.Box.newBuilder()
-                .setCode(code.getCode())
-                .setData(Any.pack(data))
-                .build());
+        ctx.writeAndFlush(ChatUtils.boxed(code, data));
     }
 
     protected boolean send(Long target, Code code) {
-        return send(target, ChatFactory.Box.newBuilder()
-                .setCode(code.getCode())
-                .build());
+        return send(target, ChatUtils.boxed(code));
     }
 
     protected boolean send(Long target, Code code, com.google.protobuf.Message data) {
-        return send(target, ChatFactory.Box.newBuilder()
-                .setCode(code.getCode())
-                .setData(Any.pack(data))
-                .build());
+        return send(target, ChatUtils.boxed(code, data));
     }
 
-    protected boolean send(Long target, ChatFactory.Box data) {
+    protected boolean send(Long target, ChatFactory.Box box) {
         ChannelHandlerContext ctx = contexts.get(target);
         if (ctx == null) {
             return false;
         }
-        ctx.writeAndFlush(data);
+        ctx.writeAndFlush(box);
         return true;
     }
 
@@ -151,8 +138,8 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected ChannelHandlerContext remove(ChannelHandlerContext ctx) {
-        Boolean removed = ctx.channel().attr(AttrKey.ATTR_REMOVED).get();
-        if (removed == null || !removed) {
+        Boolean kicked = ctx.channel().attr(AttrKey.ATTR_KICKED_OUT).get();
+        if (kicked == null || !kicked) {
             return contexts.remove(getUserId(ctx));
         }
         return null;
@@ -161,8 +148,9 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
     protected void put(ChannelHandlerContext ctx) {
         ChannelHandlerContext old = contexts.put(getUserId(ctx), ctx);
         if (old != null && old != ctx) {
-            ctx.channel().attr(AttrKey.ATTR_REMOVED).setIfAbsent(true);
-            ctx.close();
+            send(old, Code.KICKED_OUT);
+            old.channel().attr(AttrKey.ATTR_KICKED_OUT).set(true);
+            old.close();
         }
     }
 

@@ -1,7 +1,7 @@
 package io.leego.chat.manager.impl;
 
 import io.leego.chat.constant.Constants;
-import io.leego.chat.enums.MessageStatus;
+import io.leego.chat.enums.MessageStatusEnum;
 import io.leego.chat.manager.MessageManager;
 import io.leego.chat.pojo.entity.Message;
 import io.leego.chat.pojo.entity.MessageTimestamp;
@@ -39,8 +39,8 @@ public class MessageManagerImpl implements MessageManager {
         Criteria criteria = Criteria
                 .where(Constants.Message.ID).is(id)
                 .and(Constants.Message.RECIPIENT).is(recipient)
-                .and(Constants.Message.STATUS).is(MessageStatus.UNREAD.getCode());
-        Update update = Update.update(Constants.Message.STATUS, MessageStatus.READ.getCode());
+                .and(Constants.Message.STATUS).is(MessageStatusEnum.UNREAD.getCode());
+        Update update = Update.update(Constants.Message.STATUS, MessageStatusEnum.READ.getCode());
         return mongoTemplate.update(Message.class)
                 .matching(criteria)
                 .apply(update)
@@ -52,9 +52,9 @@ public class MessageManagerImpl implements MessageManager {
     public long updateMultiMessageAsRead(Long recipient, LocalDateTime endTime) {
         Criteria criteria = Criteria
                 .where(Constants.Message.RECIPIENT).is(recipient)
-                .and(Constants.Message.STATUS).is(MessageStatus.UNREAD.getCode())
+                .and(Constants.Message.STATUS).is(MessageStatusEnum.UNREAD.getCode())
                 .and(Constants.Message.TIME).lte(endTime);
-        Update update = Update.update(Constants.Message.STATUS, MessageStatus.READ.getCode());
+        Update update = Update.update(Constants.Message.STATUS, MessageStatusEnum.READ.getCode());
         return mongoTemplate.update(Message.class)
                 .matching(criteria)
                 .apply(update)
@@ -66,9 +66,9 @@ public class MessageManagerImpl implements MessageManager {
     public long updateMultiMessageAsRead(Long recipient, LocalDateTime beginTime, LocalDateTime endTime) {
         Criteria criteria = Criteria
                 .where(Constants.Message.RECIPIENT).is(recipient)
-                .and(Constants.Message.STATUS).is(MessageStatus.UNREAD.getCode())
+                .and(Constants.Message.STATUS).is(MessageStatusEnum.UNREAD.getCode())
                 .and(Constants.Message.TIME).gte(beginTime).lte(endTime);
-        Update update = Update.update(Constants.Message.STATUS, MessageStatus.READ.getCode());
+        Update update = Update.update(Constants.Message.STATUS, MessageStatusEnum.READ.getCode());
         return mongoTemplate.update(Message.class)
                 .matching(criteria)
                 .apply(update)
@@ -86,20 +86,20 @@ public class MessageManagerImpl implements MessageManager {
         if (time != null) {
             return messageRepository.getByRecipientAndStatusAndTimeGreaterThanOrderByTimeAsc(
                     recipient,
-                    MessageStatus.UNREAD.getCode(),
+                    MessageStatusEnum.UNREAD.getCode(),
                     time,
                     PageRequest.of(page - 1, size));
         } else {
             return messageRepository.getByRecipientAndStatusOrderByTimeAsc(
                     recipient,
-                    MessageStatus.UNREAD.getCode(),
+                    MessageStatusEnum.UNREAD.getCode(),
                     PageRequest.of(page - 1, size));
         }
     }
 
     @Override
-    public MessageTimestamp getMessageTimestampByOwner(Long owner) {
-        return messageTimestampRepository.getByOwner(owner);
+    public MessageTimestamp getMessageTimestampByUserId(Long userId) {
+        return messageTimestampRepository.getByUserId(userId);
     }
 
     @Override

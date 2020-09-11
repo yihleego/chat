@@ -2,8 +2,8 @@ package io.leego.chat.service.impl;
 
 import io.leego.chat.MockedSessions;
 import io.leego.chat.Result;
-import io.leego.chat.UserDetail;
 import io.leego.chat.pojo.dto.SignInDTO;
+import io.leego.chat.security.UserDetail;
 import io.leego.chat.service.AccountService;
 import io.leego.chat.util.UserUtils;
 import org.springframework.stereotype.Service;

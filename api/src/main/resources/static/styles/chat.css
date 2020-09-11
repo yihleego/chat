@@ -41,7 +41,7 @@ main {
     margin: auto;
 }
 
-.main-inner {
+.char-room {
     height: 100%;
     border-radius: 3px;
     -moz-border-radius: 3px;
@@ -98,9 +98,32 @@ main {
     color: #fff;
 }
 
+.header .info .nickname .display {
+    display: inline-block;
+    font-weight: 400;
+    width: 105px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-wrap: normal;
+    color: #fff;
+    font-size: 18px;
+    vertical-align: top;
+    line-height: 31px;
+    text-decoration: none;
+}
+
 .header .info .opt {
     display: inline-block;
     vertical-align: top;
+}
+
+.header .info .icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
 }
 
 .tab {
@@ -235,23 +258,11 @@ main {
     border-radius: 3px;
 }
 
-.bubble:after, .bubble:before {
-    position: absolute;
-    top: 14px;
-    border: 6px solid transparent;
-    content: " ";
-}
-
-.left {
-    flex-direction: row;
-}
-
-.right {
-    flex-direction: row-reverse;
-}
-
-.bubble {
-    background-color: #fff;
+.bubble pre {
+    margin: 0;
+    padding: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .bubble.primary {
@@ -268,6 +279,14 @@ main {
     top: 14px;
     border: 6px solid transparent;
     content: " ";
+}
+
+.left {
+    flex-direction: row;
+}
+
+.right {
+    flex-direction: row-reverse;
 }
 
 .left .bubble:after {
@@ -316,43 +335,27 @@ main {
 }
 
 .input-area {
-    height: 165px;
-    margin-right: 19px;
+    padding-right: 19px;
     border-top: 1px solid #d6d6d6;
 }
 
-.input-area {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-}
-
 .input-area .toolbar {
-    height: 30px;
+    height: 24px;
     margin: 5px 17px;
 }
 
-.web_wechat_face {
-    width: 30px;
-    height: 30px;
-    background: url(https://res.wx.qq.com/a/wx_fed/webwx/res/static/css/5af37c4a880a95586cd41c5b251d5562@1x.png) no-repeat;
-    background-position: -404px -398px;
-    -webkit-background-size: 487px 462px;
-    background-size: 487px 462px;
+.toolbar .icon {
+    width: 24px;
+    height: 24px;
     display: inline-block;
     vertical-align: middle;
+    cursor: pointer;
+    margin-right: 5px;
 }
 
-.web_wechat_pic {
-    width: 30px;
-    height: 30px;
-    background: url(https://res.wx.qq.com/a/wx_fed/webwx/res/static/css/5af37c4a880a95586cd41c5b251d5562@1x.png) no-repeat;
-    background-position: -120px -432px;
-    -webkit-background-size: 487px 462px;
-    background-size: 487px 462px;
-    display: inline-block;
-    vertical-align: middle;
+.toolbar .icon img {
+    width: 24px;
+    height: 24px;
 }
 
 .edit-box {
@@ -407,6 +410,11 @@ main {
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
     padding: 3px 20px;
+}
+
+.btn:disabled {
+    background-color: #f7f7f7 !important;
+    cursor: not-allowed !important;
 }
 
 .action .btn-send {
@@ -486,7 +494,7 @@ main {
     margin: 0;
     padding: 0;
     border: 0;
-    background-color: #333;
+    background-color: #3a3f45;
     box-shadow: none;
     color: #fff;
     font-size: 1em;
@@ -501,7 +509,7 @@ main {
 }
 
 .btn-sign:hover {
-    background-color: #000;
+    background-color: #292c33;
     outline: 0;
 }
 

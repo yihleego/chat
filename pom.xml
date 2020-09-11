@@ -44,7 +44,6 @@
         <module>common</module>
         <module>api</module>
         <module>server</module>
-        <module>client</module>
     </modules>
 
     <properties>
@@ -86,6 +85,13 @@
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
                         <version>${spring-boot.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>repackage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -112,11 +118,6 @@
                 <groupId>io.leego</groupId>
                 <artifactId>common</artifactId>
                 <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>javax</groupId>
-                <artifactId>javaee-api</artifactId>
-                <version>${javaee-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>

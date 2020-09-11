@@ -1,15 +1,12 @@
 package io.leego.chat.pojo.dto;
 
-import javax.validation.constraints.NotNull;
-
 /**
  * @author Yihleego
  */
 public class MessageSaveDTO {
-    @NotNull
     private Long recipient;
-    @NotNull
     private String content;
+    private Short type;
 
     public Long getRecipient() {
         return recipient;
@@ -25,5 +22,13 @@ public class MessageSaveDTO {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public Short getType() {
+        return type;
+    }
+
+    public void setType(Short type) {
+        this.type = type;
     }
 }

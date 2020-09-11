@@ -1,8 +1,8 @@
 package io.leego.chat.controller;
 
 import io.leego.chat.Result;
-import io.leego.chat.UserDetail;
 import io.leego.chat.pojo.dto.SignInDTO;
+import io.leego.chat.security.UserDetail;
 import io.leego.chat.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;

@@ -19,17 +19,19 @@ public class Message {
     private Long recipient;
     private String content;
     private LocalDateTime time;
+    private Short type;
     private Short status;
 
     public Message() {
     }
 
-    public Message(String id, Long sender, Long recipient, String content, LocalDateTime time, Short status) {
+    public Message(String id, Long sender, Long recipient, String content, LocalDateTime time, Short type, Short status) {
         this.id = id;
         this.sender = sender;
         this.recipient = recipient;
         this.content = content;
         this.time = time;
+        this.type = type;
         this.status = status;
     }
 
@@ -71,6 +73,14 @@ public class Message {
 
     public void setTime(LocalDateTime time) {
         this.time = time;
+    }
+
+    public Short getType() {
+        return type;
+    }
+
+    public void setType(Short type) {
+        this.type = type;
     }
 
     public Short getStatus() {

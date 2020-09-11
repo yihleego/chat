@@ -1,4 +1,4 @@
-package io.leego.chat.handler.codec;
+package io.leego.chat.server.handle.codec;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.leego.chat.util.ChatFactory;

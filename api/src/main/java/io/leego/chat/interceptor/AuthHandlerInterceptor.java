@@ -1,6 +1,6 @@
 package io.leego.chat.interceptor;
 
-import io.leego.chat.UserDetail;
+import io.leego.chat.security.UserDetail;
 import io.leego.chat.util.UserUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.HandlerInterceptor;

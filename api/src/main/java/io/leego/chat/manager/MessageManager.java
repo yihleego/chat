@@ -25,6 +25,6 @@ public interface MessageManager {
 
     MessageTimestamp saveMessageTimestamp(MessageTimestamp messageTimestamp);
 
-    MessageTimestamp getMessageTimestampByOwner(Long owner);
+    MessageTimestamp getMessageTimestampByUserId(Long userId);
 
 }

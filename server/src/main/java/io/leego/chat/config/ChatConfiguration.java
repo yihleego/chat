@@ -1,7 +1,6 @@
 package io.leego.chat.config;
 
 import io.leego.chat.server.ChatServer;
-import io.leego.chat.server.SocketChatServer;
 import io.leego.chat.server.WebSocketChatServer;
 import io.leego.chat.server.handle.AuthHandler;
 import io.leego.chat.server.handle.ChatServerHandler;
@@ -25,13 +24,15 @@ public class ChatConfiguration implements InitializingBean, DisposableBean {
     private ChatServer chatServer;
 
     @Bean
-    public AuthHandler authHandler() {
-        return new AuthHandler();
-    }
-
-    @Bean
-    public LoggerHandler loggerHandler() {
-        return new LoggerHandler();
+    public ChatServer chatServer(ChatProperties properties) {
+        return new WebSocketChatServer(
+                properties.getPort(),
+                properties.getPath(),
+                properties.getIdleTimeout(),
+                properties.getAuthTimeout(),
+                chatServerHandler(),
+                authHandler(),
+                loggerHandler());
     }
 
     @Bean
@@ -40,27 +41,13 @@ public class ChatConfiguration implements InitializingBean, DisposableBean {
     }
 
     @Bean
-    public ChatServer chatServer(ChatProperties properties) {
-        if (properties.getWebsocket().isEnabled()) {
-            // Creates an instance of WebSocketChatServer.
-            return new WebSocketChatServer(
-                    properties.getPort(),
-                    properties.getWebsocket().getPath(),
-                    properties.getIdleTimeout(),
-                    properties.getAuthTimeout(),
-                    chatServerHandler(),
-                    authHandler(),
-                    loggerHandler());
-        } else {
-            // Creates an instance of SocketChatServer.
-            return new SocketChatServer(
-                    properties.getPort(),
-                    properties.getIdleTimeout(),
-                    properties.getAuthTimeout(),
-                    chatServerHandler(),
-                    authHandler(),
-                    loggerHandler());
-        }
+    public AuthHandler authHandler() {
+        return new AuthHandler();
+    }
+
+    @Bean
+    public LoggerHandler loggerHandler() {
+        return new LoggerHandler();
     }
 
     @Override

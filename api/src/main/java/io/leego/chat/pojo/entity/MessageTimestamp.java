@@ -3,6 +3,7 @@ package io.leego.chat.pojo.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 
@@ -14,15 +15,16 @@ public class MessageTimestamp {
     @Id
     private String id;
     @Indexed(unique = true)
-    private Long owner;
+    @Field("user_id")
+    private Long userId;
     private LocalDateTime time;
 
     public MessageTimestamp() {
     }
 
-    public MessageTimestamp(String id, Long owner, LocalDateTime time) {
+    public MessageTimestamp(String id, Long userId, LocalDateTime time) {
         this.id = id;
-        this.owner = owner;
+        this.userId = userId;
         this.time = time;
     }
 
@@ -34,12 +36,12 @@ public class MessageTimestamp {
         this.id = id;
     }
 
-    public Long getOwner() {
-        return owner;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setOwner(Long owner) {
-        this.owner = owner;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public LocalDateTime getTime() {

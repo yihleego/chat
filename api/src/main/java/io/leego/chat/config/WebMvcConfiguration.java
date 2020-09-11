@@ -61,15 +61,13 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authHandlerInterceptor())
                 .excludePathPatterns("/sessions")
-                .excludePathPatterns("/index.html/**", "/scripts/**");
+                .excludePathPatterns("/index.html/**", "/scripts/**", "/styles/**", "/images/**");
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("index.html")
                 .addResourceLocations("classpath:/static/");
-        registry.addResourceHandler("/scripts/**")
-                .addResourceLocations("classpath:/static/scripts/");
     }
 
     @Bean

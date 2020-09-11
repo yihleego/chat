@@ -1,9 +1,6 @@
 package io.leego.chat.pojo.dto;
 
-import javax.validation.constraints.NotNull;
-
 public class SignInDTO {
-    @NotNull
     private String username;
 
     public String getUsername() {

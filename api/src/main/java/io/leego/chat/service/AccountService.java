@@ -1,8 +1,8 @@
 package io.leego.chat.service;
 
 import io.leego.chat.Result;
-import io.leego.chat.UserDetail;
 import io.leego.chat.pojo.dto.SignInDTO;
+import io.leego.chat.security.UserDetail;
 
 /**
  * @author Yihleego
