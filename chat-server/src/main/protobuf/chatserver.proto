@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package chatserver;
+
+option java_package = "io.leego.chat.core";
+option java_outer_classname = "ChatFactory";
+option java_multiple_files = true;
+
+import "google/protobuf/any.proto";
+
+message Box {
+  int32 code = 1;
+  google.protobuf.Any data = 2;
+}
+
+message Message {
+  int64 id = 1;
+  int64 sender = 2;
+  int64 recipient = 3;
+}
+
+message BulkMessage {
+  repeated int64 id = 1;
+  int64 sender = 2;
+  int64 recipient = 3;
+}
+
+message Instance {
+  int32 node = 1;
+  int64 timestamp = 2;
+  string host = 3;
+  int32 discoveryPort = 4;
+  int32 rawPort = 5;
+  int32 wsPort = 6;
+  int32 clients = 7;
+  int32 leaders = 8;
+  int32 followers = 9;
+}
+
+message Meta {
+  int32 node = 1;
+  int32 channel = 2;
+  int64 user = 3;
+  int32 client = 4;
+}
+
+message Packet {
+  Box box = 1;
+  repeated int64 target = 2;
+  repeated int32 client = 3;
+}

@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package chatapi;
+
+option java_package = "io.leego.chat.core";
+option java_outer_classname = "ChatFactory";
+option java_multiple_files = true;
+
+message Message {
+  int64 id = 1;
+  int64 sender = 2;
+  int64 recipient = 3;
+  int64 sentTime = 4;
+  int32 type = 5;
+  string content = 6;
+  bool taken = 7;
+  bool seen = 8;
+  bool revoked = 9;
+}
+
+message Messages {
+  repeated Message message = 1;
+}
+
+message GroupMessage {
+  int64 id = 1;
+  int64 groupId = 2;
+  int64 sender = 3;
+  int64 recipient = 4;
+  int64 sentTime = 5;
+  int32 type = 6;
+  string content = 7;
+  bool taken = 8;
+  bool seen = 9;
+  bool revoked = 10;
+  repeated Mention mention = 11;
+  int32 status = 12;
+}
+
+message Mention {
+  int64 userId = 1;
+  int32 index = 2;
+}
+
+message GroupMessages {
+  repeated GroupMessage message = 1;
+}
+
+message Instance {
+  int32 node = 1;
+  int64 timestamp = 2;
+  string host = 3;
+  int32 discoveryPort = 4;
+  int32 rawPort = 5;
+  int32 wsPort = 6;
+  int32 clients = 7;
+  int32 leaders = 8;
+  int32 followers = 9;
+}

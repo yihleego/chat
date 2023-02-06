@@ -1,0 +1,1162 @@
+openapi: "3.0.3"
+info:
+  title: "Chat API"
+  description: "Chat API"
+  version: "1.0.0"
+  contact:
+    email: "leegodev@hotmail.com"
+    url: "https://github.com/yihleego/chat"
+  license:
+    name: "MIT license"
+servers:
+  - url: "https://chat"
+  - url: "http:localhost:8888"
+tags:
+  - name: "basic"
+    description: "Basic APIs"
+  - name: "contact"
+    description: "Contact APIs"
+  - name: "group"
+    description: "Group APIs"
+  - name: "message"
+    description: "Message APIs"
+  - name: "group message"
+    description: "Group Message APIs"
+  - name: "account"
+    description: "Account APIs (tests)"
+  - name: "file"
+    description: "File APIs (tests)"
+paths:
+  /instances:
+    get:
+      tags:
+        - "basic"
+      summary: "Returns an available instance."
+      operationId: "getInstance"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/InstanceVO"
+      security:
+        - Authorization: [ ]
+  /contacts/{recipient}:
+    patch:
+      tags:
+        - "contact"
+      summary: "Blocks the contact with the given recipient."
+      operationId: "blockContact"
+      parameters:
+        - name: "recipient"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    delete:
+      tags:
+        - "contact"
+      summary: "Removes the contact with the given recipient."
+      operationId: "removeContact"
+      parameters:
+        - name: "recipient"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "contact"
+      summary: "Returns the contact with the given recipient."
+      operationId: "getContact"
+      parameters:
+        - name: "recipient"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/ContactVO"
+      security:
+        - Authorization: [ ]
+  /contacts:
+    get:
+      tags:
+        - "contact"
+      summary: "Returns all contacts of the current user."
+      operationId: "listContacts"
+      parameters:
+        - name: "lastTime"
+          in: "query"
+          required: false
+          schema:
+            type: "object"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ContactVO"
+      security:
+        - Authorization: [ ]
+  /contacts/requests:
+    post:
+      tags:
+        - "contact"
+      summary: "Creates a contact request."
+      operationId: "createContactRequest"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactRequestCreateDTO"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "contact"
+      summary: "Returns all contact requests of the current user."
+      operationId: "listContactRequests"
+      parameters:
+        - name: "lastTime"
+          in: "query"
+          required: false
+          schema:
+            type: "object"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ContactRequestVO"
+      security:
+        - Authorization: [ ]
+  /contacts/requests/{id}:
+    patch:
+      tags:
+        - "contact"
+      summary: "Updates the contact request with the given ID."
+      operationId: "updateContactRequest"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "action"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            enum:
+              - "accept"
+              - "reject"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "contact"
+      summary: "Returns the contact request with the given ID."
+      operationId: "getContactRequest"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/ContactRequestVO"
+      security:
+        - Authorization: [ ]
+  /groups:
+    post:
+      tags:
+        - "group"
+      summary: "Creates a group."
+      operationId: "createGroup"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupCreateDTO"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/GroupVO"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "group"
+      summary: "Returns all groups that the current user has joined."
+      operationId: "listGroups"
+      parameters:
+        - name: "lastTime"
+          in: "query"
+          required: false
+          schema:
+            type: "object"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/GroupVO"
+      security:
+        - Authorization: [ ]
+  /groups/{groupId}:
+    delete:
+      tags:
+        - "group"
+      summary: "Deletes the group with the given ID."
+      operationId: "deleteGroup"
+      parameters:
+        - name: "groupId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "group"
+      summary: "Returns the group with the given ID."
+      operationId: "getGroup"
+      parameters:
+        - name: "groupId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/GroupVO"
+      security:
+        - Authorization: [ ]
+  /groups/{groupId}/members:
+    post:
+      tags:
+        - "group"
+      summary: "Invites the user to join the group."
+      operationId: "createMember"
+      parameters:
+        - name: "groupId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupMemberCreateDTO"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+      security:
+        - Authorization: [ ]
+    delete:
+      tags:
+        - "group"
+      summary: "Leaves the group."
+      operationId: "leaveGroup"
+      parameters:
+        - name: "groupId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "group"
+      summary: "Returns all members of the group."
+      operationId: "listMembers"
+      parameters:
+        - name: "groupId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "lastTime"
+          in: "query"
+          required: false
+          schema:
+            type: "object"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/GroupMemberVO"
+      security:
+        - Authorization: [ ]
+  /groups/{groupId}/members/{userId}:
+    delete:
+      tags:
+        - "group"
+      summary: "Removes the member from the group."
+      operationId: "removeMember"
+      parameters:
+        - name: "groupId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "group"
+      summary: "Returns the member of the group."
+      operationId: "getMember"
+      parameters:
+        - name: "groupId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/GroupMemberVO"
+      security:
+        - Authorization: [ ]
+  /messages:
+    post:
+      tags:
+        - "message"
+      summary: "Creates a message."
+      operationId: "createMessage"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageCreateDTO"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/MessagePrimeVO"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "message"
+      summary: "Returns the messages on the client of the current user. The messages may contain some that have already been fetched."
+      operationId: "listMessages"
+      parameters:
+        - name: "id"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "type"
+          in: "query"
+          required: true
+          schema:
+            type: "integer"
+            format: "int32"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/MessageVO"
+      security:
+        - Authorization: [ ]
+  /messages/{ids}:
+    patch:
+      tags:
+        - "message"
+      summary: "Updates the messages with the given IDs."
+      operationId: "updateMessages"
+      parameters:
+        - name: "ids"
+          in: "path"
+          required: true
+          schema:
+            type: "array"
+            items:
+              type: "integer"
+              format: "int64"
+        - name: "action"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            enum:
+              - "take"
+              - "read"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+  /messages/{id}:
+    delete:
+      tags:
+        - "message"
+      summary: "Revokes the message with the given ID."
+      operationId: "revokeMessage"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "message"
+      summary: "eturns the message with the given ID."
+      operationId: "getMessage"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/MessageVO"
+      security:
+        - Authorization: [ ]
+  /messages#group:
+    post:
+      tags:
+        - "group message"
+      summary: "Creates a message."
+      operationId: "createGroupMessage"
+      parameters:
+        - name: "target"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            default: "group"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupMessageCreateDTO"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/GroupMessagePrimeVO"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "group message"
+      summary: "Returns the messages on the client of the current user. he messages may contain some that have already been fetched."
+      operationId: "listGroupMessages"
+      parameters:
+        - name: "target"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            default: "group"
+        - name: "id"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "type"
+          in: "query"
+          required: true
+          schema:
+            type: "integer"
+            format: "int32"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/GroupMessageVO"
+      security:
+        - Authorization: [ ]
+  /messages/{ids}#group:
+    patch:
+      tags:
+        - "group message"
+      summary: "Updates the messages with the given IDs."
+      operationId: "updateGroupMessages"
+      parameters:
+        - name: "target"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            default: "group"
+        - name: "ids"
+          in: "path"
+          required: true
+          schema:
+            type: "array"
+            items:
+              type: "integer"
+              format: "int64"
+        - name: "action"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            enum:
+              - "take"
+              - "read"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+  /messages/{id}#group:
+    delete:
+      tags:
+        - "group message"
+      summary: "Revokes the message with the given ID."
+      operationId: "revokeGroupMessage"
+      parameters:
+        - name: "target"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            default: "group"
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "group message"
+      summary: "Returns the message with the given ID."
+      operationId: "getGroupMessage"
+      parameters:
+        - name: "target"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            default: "group"
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/GroupMessageVO"
+      security:
+        - Authorization: [ ]
+  /messages/{id}/states#group:
+    get:
+      tags:
+        - "group message"
+      summary: "Returns the message state with the given ID."
+      operationId: "getGroupMessageState"
+      parameters:
+        - name: "target"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            default: "group"
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "lastTime"
+          in: "query"
+          required: false
+          schema:
+            type: "object"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/GroupMessageStateVO"
+      security:
+        - Authorization: [ ]
+  /accounts:
+    post:
+      tags:
+        - "account"
+      summary: "Sign up"
+      operationId: "signUp"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpDTO"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/AccessTokenVO"
+  /sessions:
+    post:
+      tags:
+        - "account"
+      summary: "Sign in"
+      operationId: "signIn"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignInDTO"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/AccessTokenVO"
+    delete:
+      tags:
+        - "account"
+      summary: "Sign out"
+      operationId: "signOut"
+      responses:
+        "204":
+          description: "No Content"
+      security:
+        - Authorization: [ ]
+    get:
+      tags:
+        - "account"
+      summary: "Get session"
+      operationId: "getSession"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/Authentication"
+      security:
+        - Authorization: [ ]
+  /users/{username}:
+    get:
+      tags:
+        - "account"
+      summary: "Get user"
+      operationId: "getUser"
+      parameters:
+        - name: "username"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/User"
+      security:
+        - Authorization: [ ]
+  /files:
+    post:
+      tags:
+        - "file"
+      summary: "Upload file"
+      operationId: "uploadFile"
+      parameters:
+        - name: "file"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            format: "binary"
+      responses:
+        "201":
+          description: "Created"
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/FileVO"
+      security:
+        - Authorization: [ ]
+  /files/{id}:
+    get:
+      tags:
+        - "file"
+      summary: "Download file"
+      operationId: "downloadFile"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+      security:
+        - Authorization: [ ]
+components:
+  schemas:
+    Instant:
+      type: "integer"
+      format: "int64"
+    InstanceVO:
+      type: "object"
+      properties:
+        host:
+          type: "string"
+        rawPort:
+          type: "integer"
+          format: "int32"
+        wsPort:
+          type: "integer"
+          format: "int32"
+    SignUpDTO:
+      type: "object"
+      properties:
+        username:
+          type: "string"
+        password:
+          type: "string"
+        nickname:
+          type: "string"
+        deviceId:
+          type: "integer"
+          format: "int64"
+        deviceType:
+          type: "integer"
+          format: "int32"
+        clientType:
+          type: "integer"
+          format: "int32"
+    AccessTokenVO:
+      type: "object"
+      properties:
+        accessToken:
+          type: "string"
+        tokenType:
+          type: "string"
+        expiresIn:
+          type: "integer"
+          format: "int64"
+    SignInDTO:
+      type: "object"
+      properties:
+        username:
+          type: "string"
+        password:
+          type: "string"
+        deviceId:
+          type: "integer"
+          format: "int64"
+        deviceType:
+          type: "integer"
+          format: "int32"
+        clientType:
+          type: "integer"
+          format: "int32"
+    Authentication:
+      type: "object"
+      properties:
+        userId:
+          type: "integer"
+          format: "int64"
+        username:
+          type: "string"
+        nickname:
+          type: "string"
+        avatar:
+          type: "string"
+        deviceId:
+          type: "integer"
+          format: "int64"
+        deviceType:
+          type: "integer"
+          format: "int32"
+        clientType:
+          type: "integer"
+          format: "int32"
+        token:
+          type: "string"
+    User:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        username:
+          type: "string"
+        password:
+          type: "string"
+        nickname:
+          type: "string"
+        avatar:
+          type: "string"
+    FileVO:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        filename:
+          type: "string"
+        size:
+          type: "integer"
+          format: "int64"
+    ContactVO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        recipient:
+          type: "integer"
+          format: "int64"
+        nickname:
+          type: "string"
+        avatar:
+          type: "string"
+        alias:
+          type: "string"
+        createdTime:
+          $ref: "#/components/schemas/Instant"
+        updatedTime:
+          $ref: "#/components/schemas/Instant"
+    ContactRequestCreateDTO:
+      type: "object"
+      properties:
+        recipient:
+          type: "integer"
+          format: "int64"
+        message:
+          type: "string"
+    ContactRequestVO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        nickname:
+          type: "string"
+        avatar:
+          type: "string"
+        message:
+          type: "string"
+        createdTime:
+          $ref: "#/components/schemas/Instant"
+        updatedTime:
+          $ref: "#/components/schemas/Instant"
+    GroupCreateDTO:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+    GroupVO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        avatar:
+          type: "string"
+        owner:
+          type: "integer"
+          format: "int64"
+        createdTime:
+          $ref: "#/components/schemas/Instant"
+        updatedTime:
+          $ref: "#/components/schemas/Instant"
+    GroupMemberCreateDTO:
+      type: "object"
+      properties:
+        userId:
+          type: "integer"
+          format: "int64"
+    GroupMemberVO:
+      type: "object"
+      properties:
+        userId:
+          type: "integer"
+          format: "int64"
+        nickname:
+          type: "string"
+        alias:
+          type: "string"
+        createdTime:
+          $ref: "#/components/schemas/Instant"
+        updatedTime:
+          $ref: "#/components/schemas/Instant"
+    MessageCreateDTO:
+      type: "object"
+      properties:
+        recipient:
+          type: "integer"
+          format: "int64"
+        type:
+          type: "integer"
+          format: "int32"
+        content:
+          type: "string"
+    MessagePrimeVO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        sentTime:
+          $ref: "#/components/schemas/Instant"
+    MessageVO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        sender:
+          type: "integer"
+          format: "int64"
+        recipient:
+          type: "integer"
+          format: "int64"
+        type:
+          type: "integer"
+          format: "int32"
+        content:
+          type: "string"
+        taken:
+          type: "boolean"
+        seen:
+          type: "boolean"
+        revoked:
+          type: "boolean"
+        sentTime:
+          $ref: "#/components/schemas/Instant"
+    MentionDTO:
+      type: "object"
+      properties:
+        userId:
+          type: "integer"
+          format: "int64"
+        index:
+          type: "integer"
+          format: "int32"
+    GroupMessageCreateDTO:
+      type: "object"
+      properties:
+        groupId:
+          type: "integer"
+          format: "int64"
+        type:
+          type: "integer"
+          format: "int32"
+        content:
+          type: "string"
+        mentions:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MentionDTO"
+    GroupMessagePrimeVO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        sentTime:
+          $ref: "#/components/schemas/Instant"
+        status:
+          type: "integer"
+          format: "int32"
+    MentionVO:
+      type: "object"
+      properties:
+        userId:
+          type: "integer"
+          format: "int64"
+        index:
+          type: "integer"
+          format: "int32"
+    GroupMessageVO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        groupId:
+          type: "integer"
+          format: "int64"
+        sender:
+          type: "integer"
+          format: "int64"
+        type:
+          type: "integer"
+          format: "int32"
+        content:
+          type: "string"
+        mentions:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MentionVO"
+        taken:
+          type: "boolean"
+        seen:
+          type: "boolean"
+        revoked:
+          type: "boolean"
+        sentTime:
+          $ref: "#/components/schemas/Instant"
+        status:
+          type: "integer"
+          format: "int32"
+    GroupMessageStateVO:
+      type: "object"
+      properties:
+        taken:
+          type: "array"
+          items:
+            type: "integer"
+            format: "int64"
+        seen:
+          type: "array"
+          items:
+            type: "integer"
+            format: "int64"
+        maxTime:
+          $ref: "#/components/schemas/Instant"
+  securitySchemes:
+    Authorization:
+      type: http
+      scheme: Bearer

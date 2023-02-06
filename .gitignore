@@ -17,13 +17,15 @@ target/
 
 ### NetBeans ###
 nbproject/private/
-build/
 nbbuild/
 nbdist/
 .nb-gradle/
 
 ### Custom ###
 .DS_Store
-node_modules
-logs
+node_modules/
+protobuf/
+gen/
+logs/
 *.log
+application-test.properties

@@ -1,0 +1,12 @@
+{
+  "name": "Chat",
+  "outputfilename": "Chat",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "leego",
+    "email": "leegodev@hotmail.com"
+  }
+}

@@ -1,0 +1,9 @@
+build/bin
+build/darwin
+build/windows
+node_modules
+frontend/dist
+temp/
+chat.db
+chat_*.db
+.DS_Store

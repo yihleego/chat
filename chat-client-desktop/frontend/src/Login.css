@@ -1,0 +1,294 @@
+.login {
+    border-radius: 15px;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #ffffff;
+}
+
+.login::after {
+    content: "";
+    opacity: 0.8;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.login .close {
+    position: absolute;
+    z-index: 999;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 16px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.login .close:hover {
+    background-color: #ff7875;
+}
+
+.login .ready {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 65%;
+    z-index: 5;
+}
+
+.login .ready .title {
+    color: #333;
+    margin-bottom: 12px;
+    font-size: 24px;
+    max-height: 80px;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.login .ready .avatar {
+    width: 96px;
+    height: 96px;
+    text-align: center;
+    display: block;
+    margin: 0 auto;
+    border-radius: 5px;
+}
+
+.login .ready .change {
+    text-align: center;
+    display: block;
+    margin: 0 auto;
+    color: #40a9ff;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.login .holder {
+    border-radius: 15px;
+    background-color: #fff;
+    border: 1px solid #333;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    --wails-draggable: no-drag;
+}
+
+.login .holder {
+    font-family: "Ark Pixel", sans-serif;
+}
+
+.login .holder .input {
+    border: 0;
+    outline: none;
+    box-shadow: none;
+    display: block;
+    height: 30px;
+    line-height: 30px;
+    padding: 8px 15px;
+    width: 100%;
+    font-size: 12px;
+}
+
+.login .holder .input.divider {
+    border-bottom: 1px solid #333;
+}
+
+.login .holder .input:last-child {
+    border-bottom: 0;
+}
+
+.login .holder .input::-webkit-input-placeholder {
+    color: rgba(51, 51, 51, 0.6);
+}
+
+.login .holder .visibility {
+    color: rgba(51, 51, 51, 0.6);
+    position: absolute;
+    right: 0;
+    margin-top: -35px;
+    margin-right: 10px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.login .submit-btn {
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgb(51, 51, 51);
+    border: 0;
+    border-radius: 15px;
+    display: block;
+    margin: 12px auto;
+    padding: 15px 45px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    font-family: "Ark Pixel", sans-serif;
+}
+
+.login .submit-btn:hover {
+    transition: all 0.3s ease;
+    background-color: rgb(23, 23, 23);
+}
+
+.login .submit-btn:disabled {
+    opacity: 0.65;
+}
+
+.login .signin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 65%;
+    z-index: 5;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.login .signin.slide-up {
+    top: 5%;
+    transform: translate(-50%, 0%);
+    transition: all 0.3s ease;
+}
+
+.login .signin.slide-up .holder, .login .signin.slide-up .submit-btn {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.login .signin.slide-up .title {
+    font-size: 14px;
+    cursor: pointer;
+    color: rgba(10, 10, 10, 0.6);
+    transition: all 0.3s ease;
+}
+
+.login .signin.slide-up .message {
+    margin: 0;
+    opacity: 0;
+    visibility: visible;
+    transition: all 0.3s ease;
+}
+
+.login .signup {
+    position: absolute;
+    top: 20%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fff;
+    z-index: 5;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.login .signup::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -20px;
+    transform: translate(-50%, 0);
+    background-color: #fff;
+    width: 200%;
+    height: 280px;
+    border-radius: 50%;
+    z-index: 4;
+    transition: all 0.3s ease;
+}
+
+.login .signup .center {
+    position: absolute;
+    top: calc(50% - 10%);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 65%;
+    z-index: 5;
+    transition: all 0.3s ease;
+}
+
+.login .signup.slide-up {
+    top: 85%;
+    transition: all 0.3s ease;
+}
+
+.login .signup.slide-up .center {
+    top: 10%;
+    transform: translate(-50%, 0%);
+    transition: all 0.3s ease;
+}
+
+.login .signup.slide-up .holder, .login .signup.slide-up .submit-btn {
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.login .signup.slide-up .title {
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    color: rgba(10, 10, 10, 0.6);
+    transition: all 0.3s ease;
+}
+
+.login .signup.slide-up .message {
+    margin: 0;
+    opacity: 0;
+    visibility: visible;
+    transition: all 0.3s ease;
+}
+
+.login .signin .title,
+.login .signup .title {
+    color: #333;
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 12px;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.login .signin .message,
+.login .signup .message {
+    color: #cf222e;
+    font-size: 16px;
+    height: 16px;
+    text-align: center;
+    margin-bottom: 12px;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}

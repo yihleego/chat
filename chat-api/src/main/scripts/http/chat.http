@@ -1,0 +1,308 @@
+### signUp (sender)
+POST http://localhost:8888/accounts
+Content-Type: application/json
+
+{
+  "username": "chat",
+  "password": "chat",
+  "nickname": "椒盐小猪蹄",
+  "deviceId": 1,
+  "deviceType": 1,
+  "clientType": 1
+}
+
+### signUp (recipient)
+POST http://localhost:8888/accounts
+Content-Type: application/json
+
+{
+  "username": "bot1",
+  "password": "bot1",
+  "nickname": "ChatBot1",
+  "deviceId": 1,
+  "deviceType": 1,
+  "clientType": 1
+}
+
+### signIn (sender)
+POST http://localhost:8888/sessions
+Content-Type: application/json
+
+{
+  "username": "chat",
+  "password": "chat",
+  "deviceId": 1,
+  "deviceType": 1,
+  "clientType": 1
+}
+
+### signIn (recipient)
+POST http://localhost:8888/sessions
+Content-Type: application/json
+
+{
+  "username": "bot1",
+  "password": "bot1",
+  "deviceId": 1,
+  "deviceType": 1,
+  "clientType": 1
+}
+
+### getSession
+GET http://localhost:8888/sessions
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### getUser
+GET http://localhost:8888/users/1
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### listUsers
+GET http://localhost:8888/users?ids=1&ids=2
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+
+### uploadFiles
+POST http://localhost:8888/files
+Content-Type: multipart/form-data; boundary=boundary
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+--boundary
+Content-Disposition: form-data; name="files"; filename="input.txt"
+
+< ./input.txt
+--boundary
+Content-Disposition: form-data; name="files"; filename="icon.png"
+
+< ./icon.png
+--boundary--
+
+### downloadFile
+GET http://localhost:8888/files/YEte+aWJRcCADkuoeiWkwg
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+
+### blockContact
+PATCH http://localhost:8888/contacts/2
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### removeContact
+DELETE http://localhost:8888/contacts/2
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### listContacts (sender)
+GET http://localhost:8888/contacts?lastTime=
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### createContactRequest (sender)
+POST http://localhost:8888/contacts/requests
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+{
+  "recipient": 2,
+  "message": "Hello, World!👋🏻"
+}
+
+### acceptContactRequest (recipient)
+PATCH http://localhost:8888/contacts/requests/1?action=accept
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### rejectContactRequest (recipient)
+PATCH http://localhost:8888/contacts/requests/1?action=reject
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### listContactRequests (recipient)
+GET http://localhost:8888/contacts/requests?lastTime=
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+
+### createGroup
+POST http://localhost:8888/groups
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+{
+  "name": "One Group"
+}
+
+### deleteGroup
+DELETE http://localhost:8888/groups/1
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### getGroup
+GET http://localhost:8888/groups/1
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### listGroups
+GET http://localhost:8888/groups?lastTime=
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### createMember
+POST http://localhost:8888/groups/1/members
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+{
+  "userId": 2
+}
+
+### leaveGroup
+DELETE http://localhost:8888/groups/1/members/2
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### removeMember
+DELETE http://localhost:8888/groups/1/members/2
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### listMembers
+GET http://localhost:8888/groups/1/members?lastTime=
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+
+### createMessage - text (sender)
+POST http://localhost:8888/messages
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+{
+  "recipient": 2,
+  "type": 0,
+  "content": "Hello, World!👋🏻"
+}
+
+### createMessage - image (sender)
+POST http://localhost:8888/messages
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+{
+  "recipient": 2,
+  "type": 1,
+  "content": "[\"1\",\"2\"]"
+}
+
+### createMessage - video (sender)
+POST http://localhost:8888/messages
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+{
+  "recipient": 2,
+  "type": 2,
+  "content": "{\"url\":\"1\",\"filename\":\"2\",\"size\":\"3\",\"duration\":\"4\"}"
+}
+
+### takeMessages (recipient)
+PATCH http://localhost:8888/messages/13?action=take
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### readMessages (recipient)
+PATCH http://localhost:8888/messages/1?action=read
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### revokeMessage (sender)
+DELETE http://localhost:8888/messages/1
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### getMessage (sender)
+GET http://localhost:8888/messages/1
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### listMessages (sender)
+GET http://localhost:8888/messages?type=0&id=
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### getMessage (recipient)
+GET http://localhost:8888/messages/1
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### listMessages (recipient)
+GET http://localhost:8888/messages?type=1&id=
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+
+### createGroupMessage (sender)
+POST http://localhost:8888/messages?target=group
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+{
+  "groupId": 1,
+  "type": 0,
+  "content": "Hello, World!👋🏻",
+  "mentions": [
+    {
+      "userId": 2,
+      "index": 0
+    }
+  ]
+}
+
+### takeGroupMessages (recipient)
+PATCH http://localhost:8888/messages/1?action=take&target=group
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### readGroupMessages (recipient)
+PATCH http://localhost:8888/messages/1?action=read&target=group
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### revokeGroupMessage (sender)
+DELETE http://localhost:8888/messages/1?target=group
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### getGroupMessage (sender)
+GET http://localhost:8888/messages/1?target=group
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### getGroupMessageState (sender)
+GET http://localhost:8888/messages/1/states?target=group
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### listGroupMessages (sender)
+GET http://localhost:8888/messages?type=0&target=group&id=
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
+
+### getGroupMessage (recipient)
+GET http://localhost:8888/messages/1?target=group
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+### listGroupMessages (recipient)
+GET http://localhost:8888/messages?type=1&target=group&id=
+Content-Type: application/json
+Authorization: Bearer Nda42OPuRPWyEp3xVhAKtA
+
+
+### getInstance
+GET http://localhost:8888/instances
+Content-Type: application/json
+Authorization: Bearer 23Z3I9qzSruDxK5mUYmLrw
